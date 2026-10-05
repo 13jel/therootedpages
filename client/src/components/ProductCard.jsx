@@ -1,24 +1,24 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
-import { useCurrency } from '../context/CurrencyContext';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { useCurrency } from "../context/CurrencyContext";
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const { formatPrice } = useCurrency();
-  const [status, setStatus] = useState('idle');
+  const [status, setStatus] = useState("idle");
 
   async function handleAddToCart(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    setStatus('loading');
+    setStatus("loading");
     try {
       await addItem(product, 1);
-      setStatus('done');
-      setTimeout(() => setStatus('idle'), 1500);
+      setStatus("done");
+      setTimeout(() => setStatus("idle"), 1500);
     } catch {
-      setStatus('error');
+      setStatus("error");
     }
   }
 
@@ -30,17 +30,17 @@ export default function ProductCard({ product }) {
         <h3>{product.name}</h3>
         <p className="price">{formatPrice(product.price)}</p>
         <p className="stock">
-          {product.stock > 0 ? `${product.stock} i lager` : 'Slut i lager'}
+          {product.stock > 0 ? `${product.stock} i lager` : "Slut i lager"}
         </p>
 
         <button
           onClick={handleAddToCart}
-          disabled={product.stock === 0 || status === 'loading'}
+          disabled={product.stock === 0 || status === "loading"}
         >
-          {status === 'loading' && 'Lägger till...'}
-          {status === 'done' && 'Tillagd!'}
-          {status === 'idle' && 'Lägg i varukorg'}
-          {status === 'error' && 'Något gick fel'}
+          {status === "loading" && "Lägger till..."}
+          {status === "done" && "Tillagd!"}
+          {status === "idle" && "Lägg i varukorg"}
+          {status === "error" && "Något gick fel"}
         </button>
       </div>
     </Link>

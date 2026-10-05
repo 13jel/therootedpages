@@ -2,8 +2,6 @@ import { Router, Response } from "express";
 import { supabaseForUser, supabaseAdmin } from "./supabaseClient.js";
 import { requireAuth, requireAdmin } from "./middleware/auth.js";
 import { AuthRequest } from "./types.js";
-import { Resend } from "resend";
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const orderRouter = Router();
 
@@ -19,9 +17,13 @@ orderRouter.post("/", async (req: AuthRequest, res: Response) => {
     .eq("user_id", req.user!.id);
 
   if (cartError) return res.status(500).json({ error: cartError.message });
-  if (!cartItems?.length) return res.status(400).json({ error: "Varukorgen är tom" });
+  if (!cartItems?.length)
+    return res.status(400).json({ error: "Varukorgen är tom" });
 
-  const total = cartItems.reduce((sum, i: any) => sum + i.quantity * i.product.price, 0);
+  const total = cartItems.reduce(
+    (sum, i: any) => sum + i.quantity * i.product.price,
+    0,
+  );
 
   const { data: order, error: orderError } = await sb
     .from("orders")
@@ -45,23 +47,17 @@ orderRouter.post("/", async (req: AuthRequest, res: Response) => {
   res.status(201).json({ ...order, items: orderItems });
 
   sendInvoiceEmail(req.user!.email!, order, cartItems).catch((err) =>
-    console.error("Kunde inte skicka faktura:", err)
+    console.error("Kunde inte skicka faktura:", err),
   );
 });
 
 async function sendInvoiceEmail(email: string, order: any, cartItems: any[]) {
   const rows = cartItems
-    .map((i) => `<tr><td>${i.product.name}</td><td>${i.quantity}</td><td>${i.product.price} slantar</td></tr>`)
+    .map(
+      (i) =>
+        `<tr><td>${i.product.name}</td><td>${i.quantity}</td><td>${i.product.price} slantar</td></tr>`,
+    )
     .join("");
-
-  await resend.emails.send({
-    from: "onboarding@resend.dev",
-    to: email,
-    subject: `Faktura för order #${order.id}`,
-    html: `<h2>Tack för din beställning!</h2>
-      <table border="1" cellpadding="6"><tr><th>Produkt</th><th>Antal</th><th>Pris</th></tr>${rows}</table>
-      <p><strong>Totalt: ${order.total} slantar</strong></p>`,
-  });
 }
 
 orderRouter.get("/", requireAdmin, async (req: AuthRequest, res: Response) => {
@@ -83,16 +79,20 @@ orderRouter.get("/mine", async (req: AuthRequest, res: Response) => {
   res.json(data);
 });
 
-orderRouter.patch("/:id/status", requireAdmin, async (req: AuthRequest, res: Response) => {
-  const { status } = req.body;
-  const { data, error } = await supabaseAdmin
-    .from("orders")
-    .update({ status })
-    .eq("id", req.params.id)
-    .select()
-    .single();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
+orderRouter.patch(
+  "/:id/status",
+  requireAdmin,
+  async (req: AuthRequest, res: Response) => {
+    const { status } = req.body;
+    const { data, error } = await supabaseAdmin
+      .from("orders")
+      .update({ status })
+      .eq("id", req.params.id)
+      .select()
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  },
+);
 
 export default orderRouter;

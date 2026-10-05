@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { fetchAllProductsAdmin, createProduct, updateProduct, deleteProduct } from '../api/adminProducts';
-import ProductForm from '../components/ProductForm';
-import ProductGallery from '../components/ProductGallery';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import {
+  fetchAllProductsAdmin,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "../api/adminProducts";
+import ProductForm from "../components/ProductForm";
+import ProductGallery from "../components/ProductGallery";
 
 export default function AdminProducts() {
   const { token } = useAuth();
@@ -48,12 +53,12 @@ export default function AdminProducts() {
       category: product.category,
       theme: product.theme,
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function handleDelete(product) {
     const confirmed = window.confirm(
-      `Ta bort "${product.name}"? Produkten döljs från butiken men gamla ordrar påverkas inte.`
+      `Ta bort "${product.name}"? Produkten döljs från butiken men gamla ordrar påverkas inte.`,
     );
     if (!confirmed) return;
 
@@ -71,7 +76,9 @@ export default function AdminProducts() {
   return (
     <div className="admin-products">
       <nav className="admin-subnav">
-        <Link to="/admin/products" className="active">Produkter</Link>
+        <Link to="/admin/products" className="active">
+          Produkter
+        </Link>
         <Link to="/admin/collections">Kollektioner</Link>
         <Link to="/admin/orders">Ordrar</Link>
         <Link to="/admin/gallery">Galleri</Link>
@@ -87,8 +94,9 @@ export default function AdminProducts() {
               <div>
                 <strong>{justCreated.name}</strong> sparad i butiken.
                 <p>
-                  Bilder du laddar upp här nedan sparas direkt till <strong>{justCreated.name}</strong> —
-                  ingen extra sparaknapp behövs. Lägg till så många du vill, eller gå vidare direkt.
+                  Bilder du laddar upp här nedan sparas direkt till{" "}
+                  <strong>{justCreated.name}</strong> — ingen extra sparaknapp
+                  behövs. Lägg till så många du vill, eller gå vidare direkt.
                 </p>
               </div>
             </div>
@@ -105,15 +113,21 @@ export default function AdminProducts() {
           </div>
         ) : (
           <>
-            <h2>{duplicateSource ? 'Duplicerar produkt' : 'Lägg till ny produkt'}</h2>
+            <h2>
+              {duplicateSource ? "Duplicerar produkt" : "Lägg till ny produkt"}
+            </h2>
             {duplicateSource && (
               <p className="duplicate-hint">
-                Fälten är förifyllda från originalet, inklusive bilden. Ändra typ (t.ex. Tyg → Tapet), justera pris/lager, eller ladda upp en ny bild vid behov.{' '}
-                <button type="button" onClick={() => setDuplicateSource(null)}>Avbryt duplicering</button>
+                Fälten är förifyllda från originalet, inklusive bilden. Ändra
+                typ (t.ex. Tyg → Tapet), justera pris/lager, eller ladda upp en
+                ny bild vid behov.{" "}
+                <button type="button" onClick={() => setDuplicateSource(null)}>
+                  Avbryt duplicering
+                </button>
               </p>
             )}
             <ProductForm
-              key={duplicateSource ? duplicateSource.name : 'new'}
+              key={duplicateSource ? duplicateSource.name : "new"}
               initialProduct={duplicateSource}
               mode="create"
               onSubmit={handleCreate}
@@ -145,14 +159,18 @@ export default function AdminProducts() {
                   <span>{product.name}</span>
                   <span>{product.price} slantar</span>
                   <span>{product.stock} st</span>
-                  <button onClick={() => setEditingId(product.id)}>Redigera</button>
-                  <button onClick={() => handleDuplicate(product)}>Duplicera</button>
+                  <button onClick={() => setEditingId(product.id)}>
+                    Redigera
+                  </button>
+                  <button onClick={() => handleDuplicate(product)}>
+                    Duplicera
+                  </button>
                   <button
                     onClick={() => handleDelete(product)}
                     disabled={deletingId === product.id}
                     className="danger-button"
                   >
-                    {deletingId === product.id ? 'Tar bort...' : 'Ta bort'}
+                    {deletingId === product.id ? "Tar bort..." : "Ta bort"}
                   </button>
                 </div>
               )}

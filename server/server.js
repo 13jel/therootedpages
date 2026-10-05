@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import productsRouter from "./product-routes.js";
-import messagesRouter from "./routes/messages.js";
 
 
 dotenv.config();
@@ -13,7 +12,6 @@ app.use(express.json());
 app.use(express.urlencoded());
 app.use(cors());
 app.use("/api/products", productsRouter);
-app.use("/api/messages", messagesRouter);
 
 app.get("/", (req, res) => {
     res.send("Hello world<form method='post'><button type='submit'>Sign in</button></form>");

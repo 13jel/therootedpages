@@ -1,29 +1,33 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
-import CurrencySelect from './CurrencySelect';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import CurrencySelect from "./CurrencySelect";
 
 export default function Navbar() {
   const { session, isAdmin, signOut } = useAuth();
   const { itemCount } = useCart();
   const navigate = useNavigate();
-  const [quickSearch, setQuickSearch] = useState('');
+  const [quickSearch, setQuickSearch] = useState("");
 
   async function handleSignOut() {
     await signOut();
-    navigate('/');
+    navigate("/");
   }
 
   function handleQuickSearch(e) {
     e.preventDefault();
     const query = quickSearch.trim();
-    navigate(query ? `/products?search=${encodeURIComponent(query)}` : '/products');
+    navigate(
+      query ? `/products?search=${encodeURIComponent(query)}` : "/products",
+    );
   }
 
   return (
     <nav className="navbar">
-      <Link to="/" className="navbar-brand">TRP</Link>
+      <Link to="/" className="navbar-brand">
+        TRP
+      </Link>
 
       <form onSubmit={handleQuickSearch} className="navbar-search">
         <input
@@ -34,13 +38,19 @@ export default function Navbar() {
           aria-label="Sök bland produkter"
         />
         <button type="submit" aria-label="Sök">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <circle cx="11" cy="11" r="7" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-        </button>      
+        </button>
       </form>
-
 
       <div className="navbar-links">
         <Link to="/products">Produkter</Link>

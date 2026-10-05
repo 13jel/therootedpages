@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { fetchCollections, createCollection, updateCollection, deleteCollection } from '../api/collections';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import {
+  fetchCollections,
+  createCollection,
+  updateCollection,
+  deleteCollection,
+} from "../api/collections";
 
 export default function AdminCollections() {
   const { token } = useAuth();
@@ -9,12 +14,12 @@ export default function AdminCollections() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [editName, setEditName] = useState('');
-  const [editDescription, setEditDescription] = useState('');
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   useEffect(() => {
     load();
@@ -34,8 +39,8 @@ export default function AdminCollections() {
     setError(null);
     try {
       await createCollection(token, { name, description });
-      setName('');
-      setDescription('');
+      setName("");
+      setDescription("");
       load();
     } catch (err) {
       setError(err.message);
@@ -47,12 +52,15 @@ export default function AdminCollections() {
   function startEdit(c) {
     setEditingId(c.id);
     setEditName(c.name);
-    setEditDescription(c.description || '');
+    setEditDescription(c.description || "");
   }
 
   async function handleUpdate(id) {
     try {
-      await updateCollection(token, id, { name: editName, description: editDescription });
+      await updateCollection(token, id, {
+        name: editName,
+        description: editDescription,
+      });
       setEditingId(null);
       load();
     } catch (err) {
@@ -61,7 +69,12 @@ export default function AdminCollections() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Ta bort kollektionen? Produkter kopplade till den blir kvar men förlorar kollektionstillhörigheten.')) return;
+    if (
+      !window.confirm(
+        "Ta bort kollektionen? Produkter kopplade till den blir kvar men förlorar kollektionstillhörigheten.",
+      )
+    )
+      return;
     try {
       await deleteCollection(token, id);
       load();
@@ -76,7 +89,9 @@ export default function AdminCollections() {
         <Link to="/admin/products">Produkter</Link>
         <Link to="/admin/orders">Ordrar</Link>
         <Link to="/admin/gallery">Galleri</Link>
-        <Link to="/admin/collections" className="active">Kollektioner</Link>
+        <Link to="/admin/collections" className="active">
+          Kollektioner
+        </Link>
       </nav>
 
       <h1>Admin – Kollektioner</h1>
@@ -86,15 +101,22 @@ export default function AdminCollections() {
         <form onSubmit={handleCreate} className="product-form">
           <label>
             Namn
-            <input value={name} onChange={(e) => setName(e.target.value)} required />
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
           </label>
           <label>
             Beskrivning
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </label>
           {error && <p className="form-error">{error}</p>}
           <button type="submit" disabled={saving}>
-            {saving ? 'Sparar...' : 'Skapa kollektion'}
+            {saving ? "Sparar..." : "Skapa kollektion"}
           </button>
         </form>
       </section>
@@ -109,23 +131,38 @@ export default function AdminCollections() {
                 <div className="product-form">
                   <label>
                     Namn
-                    <input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                    />
                   </label>
                   <label>
                     Beskrivning
-                    <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                    />
                   </label>
                   <div className="form-actions">
-                    <button type="button" onClick={() => handleUpdate(c.id)}>Spara</button>
-                    <button type="button" onClick={() => setEditingId(null)}>Avbryt</button>
+                    <button type="button" onClick={() => handleUpdate(c.id)}>
+                      Spara
+                    </button>
+                    <button type="button" onClick={() => setEditingId(null)}>
+                      Avbryt
+                    </button>
                   </div>
                 </div>
               ) : (
                 <div className="admin-product-row">
                   <span>{c.name}</span>
-                  <span>{c.description || '—'}</span>
+                  <span>{c.description || "—"}</span>
                   <button onClick={() => startEdit(c)}>Redigera</button>
-                  <button onClick={() => handleDelete(c.id)} className="danger-button">Ta bort</button>
+                  <button
+                    onClick={() => handleDelete(c.id)}
+                    className="danger-button"
+                  >
+                    Ta bort
+                  </button>
                 </div>
               )}
             </li>

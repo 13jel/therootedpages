@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
-import { useCurrency } from '../context/CurrencyContext';
-import { useProduct } from '../hooks/useProduct';
-import { supabase } from '../api/supabaseClient';
-import { parseThemes } from '../utils/theme';
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { useCurrency } from "../context/CurrencyContext";
+import { useProduct } from "../hooks/useProduct";
+import { supabase } from "../api/supabaseClient";
+import { parseThemes } from "../utils/theme";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { product, loading, error } = useProduct(id);
   const { addItem } = useCart();
   const { formatPrice } = useCurrency();
-  const [status, setStatus] = useState('idle');
+  const [status, setStatus] = useState("idle");
   const [activeImage, setActiveImage] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [collectionProducts, setCollectionProducts] = useState([]);
@@ -22,22 +22,22 @@ export default function ProductDetail() {
       return;
     }
     supabase
-      .from('products')
-      .select('id, name, image_url')
-      .eq('collection_id', product.collections.id)
-      .eq('is_active', true)
-      .neq('id', product.id)
+      .from("products")
+      .select("id, name, image_url")
+      .eq("collection_id", product.collections.id)
+      .eq("is_active", true)
+      .neq("id", product.id)
       .then(({ data }) => setCollectionProducts(data || []));
   }, [product]);
 
   async function handleAddToCart() {
-    setStatus('loading');
+    setStatus("loading");
     try {
       await addItem(product, 1);
-      setStatus('done');
-      setTimeout(() => setStatus('idle'), 1500);
+      setStatus("done");
+      setTimeout(() => setStatus("idle"), 1500);
     } catch {
-      setStatus('error');
+      setStatus("error");
     }
   }
 
@@ -52,7 +52,9 @@ export default function ProductDetail() {
 
   return (
     <div className="product-detail">
-      <Link to="/products" className="back-link">← Tillbaka till produkter</Link>
+      <Link to="/products" className="back-link">
+        ← Tillbaka till produkter
+      </Link>
 
       {mainImage && (
         <button
@@ -60,7 +62,11 @@ export default function ProductDetail() {
           className="product-detail-main-image-wrap"
           onClick={() => setLightboxOpen(true)}
         >
-          <img src={mainImage} alt={product.name} className="product-detail-main-image" />
+          <img
+            src={mainImage}
+            alt={product.name}
+            className="product-detail-main-image"
+          />
           <span className="zoom-hint">Klicka för att förstora</span>
         </button>
       )}
@@ -71,7 +77,7 @@ export default function ProductDetail() {
             <button
               key={url}
               type="button"
-              className={url === mainImage ? 'active' : ''}
+              className={url === mainImage ? "active" : ""}
               onClick={() => setActiveImage(url)}
             >
               <img src={url} alt="" />
@@ -88,26 +94,30 @@ export default function ProductDetail() {
         {parseThemes(product.theme).length > 0 && (
           <div className="theme-tags">
             {parseThemes(product.theme).map((theme) => (
-              <span key={theme} className="theme-tag">{theme}</span>
+              <span key={theme} className="theme-tag">
+                {theme}
+              </span>
             ))}
           </div>
         )}
 
-        {product.description && <p className="description">{product.description}</p>}
+        {product.description && (
+          <p className="description">{product.description}</p>
+        )}
 
         <p className="price">{formatPrice(product.price)}</p>
         <p className="stock">
-          {product.stock > 0 ? `${product.stock} i lager` : 'Slut i lager'}
+          {product.stock > 0 ? `${product.stock} i lager` : "Slut i lager"}
         </p>
 
         <button
           onClick={handleAddToCart}
-          disabled={product.stock === 0 || status === 'loading'}
+          disabled={product.stock === 0 || status === "loading"}
         >
-          {status === 'loading' && 'Lägger till...'}
-          {status === 'done' && 'Tillagd!'}
-          {status === 'idle' && 'Lägg i varukorg'}
-          {status === 'error' && 'Något gick fel'}
+          {status === "loading" && "Lägger till..."}
+          {status === "done" && "Tillagd!"}
+          {status === "idle" && "Lägg i varukorg"}
+          {status === "error" && "Något gick fel"}
         </button>
       </div>
 
@@ -116,7 +126,11 @@ export default function ProductDetail() {
           <h2>Del av kollektionen: {product.collections.name}</h2>
           <div className="collection-items">
             {collectionProducts.map((p) => (
-              <Link key={p.id} to={`/products/${p.id}`} className="collection-item">
+              <Link
+                key={p.id}
+                to={`/products/${p.id}`}
+                className="collection-item"
+              >
                 {p.image_url && <img src={p.image_url} alt={p.name} />}
                 <span>{p.name}</span>
               </Link>
@@ -126,7 +140,10 @@ export default function ProductDetail() {
       )}
 
       {lightboxOpen && (
-        <div className="lightbox-overlay" onClick={() => setLightboxOpen(false)}>
+        <div
+          className="lightbox-overlay"
+          onClick={() => setLightboxOpen(false)}
+        >
           <button
             type="button"
             className="lightbox-close"

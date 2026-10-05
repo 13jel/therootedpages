@@ -1,12 +1,12 @@
-import { apiFetch } from './apiClient';
+import { apiFetch } from "./apiClient";
 
 export function fetchCollections() {
-  return apiFetch('/api/collections');
+  return apiFetch("/api/collections");
 }
 
 export function createCollection(token, collection) {
-  return apiFetch('/api/collections', {
-    method: 'POST',
+  return apiFetch("/api/collections", {
+    method: "POST",
     token,
     body: JSON.stringify(collection),
   });
@@ -14,7 +14,7 @@ export function createCollection(token, collection) {
 
 export function updateCollection(token, id, updates) {
   return apiFetch(`/api/collections/${id}`, {
-    method: 'PUT',
+    method: "PUT",
     token,
     body: JSON.stringify(updates),
   });
@@ -22,7 +22,7 @@ export function updateCollection(token, id, updates) {
 
 export function deleteCollection(token, id) {
   return apiFetch(`/api/collections/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
     token,
   });
 }

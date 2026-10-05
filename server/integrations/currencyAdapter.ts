@@ -50,7 +50,10 @@ export async function getRates(base: Currency = "SEK"): Promise<Rates> {
   }
 
   if (!response.ok) {
-    throw new CurrencyServiceError(`Valutatjänsten svarade med status ${response.status}`, 502);
+    throw new CurrencyServiceError(
+      `Valutatjänsten svarade med status ${response.status}`,
+      502,
+    );
   }
 
   let body: unknown;
@@ -61,7 +64,10 @@ export async function getRates(base: Currency = "SEK"): Promise<Rates> {
   }
 
   if (!Array.isArray(body) || !body.every(isRateRow)) {
-    throw new CurrencyServiceError("Oväntat format på svaret från valutatjänsten", 502);
+    throw new CurrencyServiceError(
+      "Oväntat format på svaret från valutatjänsten",
+      502,
+    );
   }
 
   const rates: Record<string, number> = { [base]: 1 };
@@ -73,7 +79,10 @@ export async function getRates(base: Currency = "SEK"): Promise<Rates> {
 
   const missing = quotes.filter((q) => rates[q] === undefined);
   if (missing.length > 0) {
-    throw new CurrencyServiceError(`Valutatjänsten saknar kurs för ${missing.join(", ")}`, 502);
+    throw new CurrencyServiceError(
+      `Valutatjänsten saknar kurs för ${missing.join(", ")}`,
+      502,
+    );
   }
 
   return { base, date, rates };

@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
-import { getRates, CurrencyServiceError } from "./integrations/currencyAdapter.js";
+import {
+  getRates,
+  CurrencyServiceError,
+} from "./integrations/currencyAdapter.js";
 
 const currencyRouter = Router();
 

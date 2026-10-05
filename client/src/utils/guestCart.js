@@ -1,4 +1,4 @@
-const KEY = 'trp_guest_cart';
+const KEY = "trp_guest_cart";
 
 export function readGuestCart() {
   try {

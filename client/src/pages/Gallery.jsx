@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchGallery } from '../api/gallery';
-import ContactForm from '../components/ContactForm';
+
+const CONTACT_EMAIL = 'juliaelindstrom@outlook.com';
 
 export default function Gallery() {
   const [items, setItems] = useState([]);
@@ -45,7 +46,12 @@ export default function Gallery() {
       <section className="gallery-cta">
         <h2>Vill du beställa en logotyp till dig eller ditt företag?</h2>
         <p>Hör av dig, så pratar vi vidare om stil, tidsram och pris.</p>
-        <ContactForm />
+        <a
+          href={`mailto:${CONTACT_EMAIL}?subject=Logotypbeställning`}
+          className="cta-button"
+        >
+          Mejla mig
+        </a>
       </section>
 
       {activeItem && (

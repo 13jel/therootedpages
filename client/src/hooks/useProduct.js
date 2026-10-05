@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { fetchProductById } from '../api/products';
+import { useEffect, useState } from "react";
+import { fetchProductById } from "../api/products";
 
 export function useProduct(id) {
   const [product, setProduct] = useState(null);

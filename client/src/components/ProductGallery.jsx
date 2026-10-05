@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../api/supabaseClient';
-import { uploadProductImage } from '../utils/image';
+import { useEffect, useState } from "react";
+import { supabase } from "../api/supabaseClient";
+import { uploadProductImage } from "../utils/image";
 
 export default function ProductGallery({ productId }) {
   const [images, setImages] = useState([]);
@@ -15,10 +15,10 @@ export default function ProductGallery({ productId }) {
   async function loadImages() {
     setLoading(true);
     const { data, error } = await supabase
-      .from('product_images')
-      .select('*')
-      .eq('product_id', productId)
-      .order('sort_order', { ascending: true });
+      .from("product_images")
+      .select("*")
+      .eq("product_id", productId)
+      .order("sort_order", { ascending: true });
 
     if (error) setError(error.message);
     else setImages(data);
@@ -34,20 +34,27 @@ export default function ProductGallery({ productId }) {
     try {
       const url = await uploadProductImage(supabase, file);
       const { error } = await supabase
-        .from('product_images')
-        .insert({ product_id: productId, image_url: url, sort_order: images.length });
+        .from("product_images")
+        .insert({
+          product_id: productId,
+          image_url: url,
+          sort_order: images.length,
+        });
       if (error) throw new Error(error.message);
       await loadImages();
     } catch (err) {
       setError(err.message);
     } finally {
       setUploading(false);
-      e.target.value = '';
+      e.target.value = "";
     }
   }
 
   async function handleDelete(imageId) {
-    const { error } = await supabase.from('product_images').delete().eq('id', imageId);
+    const { error } = await supabase
+      .from("product_images")
+      .delete()
+      .eq("id", imageId);
     if (error) {
       setError(error.message);
       return;
@@ -67,15 +74,23 @@ export default function ProductGallery({ productId }) {
           {images.map((img) => (
             <div key={img.id} className="gallery-thumb">
               <img src={img.image_url} alt="" />
-              <button type="button" onClick={() => handleDelete(img.id)}>Ta bort</button>
+              <button type="button" onClick={() => handleDelete(img.id)}>
+                Ta bort
+              </button>
             </div>
           ))}
         </div>
       )}
 
       <label className="gallery-add">
-        {uploading ? 'Laddar upp...' : '+ Lägg till bild'}
-        <input type="file" accept="image/*" onChange={handleAdd} disabled={uploading} hidden />
+        {uploading ? "Laddar upp..." : "+ Lägg till bild"}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleAdd}
+          disabled={uploading}
+          hidden
+        />
       </label>
     </div>
   );

@@ -1,31 +1,49 @@
-import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useProducts } from '../hooks/useProducts';
-import ProductCard from '../components/ProductCard';
-import { parseThemes } from '../utils/theme';
+import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useProducts } from "../hooks/useProducts";
+import ProductCard from "../components/ProductCard";
+import { parseThemes } from "../utils/theme";
 
-const TYPES = ['Posters', 'Tyg', 'Tapet'];
+const TYPES = ["Posters", "Tyg", "Tapet"];
 
 const SORT_OPTIONS = {
-  'name-asc': { label: 'Namn (A–Ö)', compare: (a, b) => a.name.localeCompare(b.name, 'sv') },
-  'name-desc': { label: 'Namn (Ö–A)', compare: (a, b) => b.name.localeCompare(a.name, 'sv') },
-  'price-asc': { label: 'Pris (lägst först)', compare: (a, b) => a.price - b.price },
-  'price-desc': { label: 'Pris (högst först)', compare: (a, b) => b.price - a.price },
-  'newest': { label: 'Nyast', compare: (a, b) => new Date(b.created_at) - new Date(a.created_at) },
+  "name-asc": {
+    label: "Namn (A–Ö)",
+    compare: (a, b) => a.name.localeCompare(b.name, "sv"),
+  },
+  "name-desc": {
+    label: "Namn (Ö–A)",
+    compare: (a, b) => b.name.localeCompare(a.name, "sv"),
+  },
+  "price-asc": {
+    label: "Pris (lägst först)",
+    compare: (a, b) => a.price - b.price,
+  },
+  "price-desc": {
+    label: "Pris (högst först)",
+    compare: (a, b) => b.price - a.price,
+  },
+  newest: {
+    label: "Nyast",
+    compare: (a, b) => new Date(b.created_at) - new Date(a.created_at),
+  },
 };
 
 export default function ProductList() {
   const { products, loading, error } = useProducts();
-  const [activeType, setActiveType] = useState('Alla');
-  const [activeTheme, setActiveTheme] = useState('Alla');
-  const [sortKey, setSortKey] = useState('name-asc');
-  const [view, setView] = useState('grid');
+  const [activeType, setActiveType] = useState("Alla");
+  const [activeTheme, setActiveTheme] = useState("Alla");
+  const [sortKey, setSortKey] = useState("name-asc");
+  const [view, setView] = useState("grid");
   const [searchParams] = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [search, setSearch] = useState(searchParams.get("search") || "");
 
   const themes = useMemo(() => {
     const unique = new Set(products.flatMap((p) => parseThemes(p.theme)));
-    return ['Alla', ...Array.from(unique).sort((a, b) => a.localeCompare(b, 'sv'))];
+    return [
+      "Alla",
+      ...Array.from(unique).sort((a, b) => a.localeCompare(b, "sv")),
+    ];
   }, [products]);
 
   const filtered = products.filter((p) => {
@@ -36,8 +54,9 @@ export default function ProductList() {
       (p.description && p.description.toLowerCase().includes(query)) ||
       parseThemes(p.theme).some((t) => t.toLowerCase().includes(query));
 
-    const typeMatch = activeType === 'Alla' || p.category === activeType;
-    const themeMatch = activeTheme === 'Alla' || parseThemes(p.theme).includes(activeTheme);
+    const typeMatch = activeType === "Alla" || p.category === activeType;
+    const themeMatch =
+      activeTheme === "Alla" || parseThemes(p.theme).includes(activeTheme);
 
     return searchMatch && typeMatch && themeMatch;
   });
@@ -63,15 +82,15 @@ export default function ProductList() {
       <div className="filter-bar">
         <div className="filter-group">
           <button
-            className={activeType === 'Alla' ? 'active' : ''}
-            onClick={() => setActiveType('Alla')}
+            className={activeType === "Alla" ? "active" : ""}
+            onClick={() => setActiveType("Alla")}
           >
             Alla
           </button>
           {TYPES.map((type) => (
             <button
               key={type}
-              className={activeType === type ? 'active' : ''}
+              className={activeType === type ? "active" : ""}
               onClick={() => setActiveType(type)}
             >
               {type}
@@ -83,7 +102,10 @@ export default function ProductList() {
           {themes.length > 1 && (
             <label className="theme-select">
               Tema
-              <select value={activeTheme} onChange={(e) => setActiveTheme(e.target.value)}>
+              <select
+                value={activeTheme}
+                onChange={(e) => setActiveTheme(e.target.value)}
+              >
                 {themes.map((theme) => (
                   <option key={theme} value={theme}>
                     {theme}
@@ -95,7 +117,10 @@ export default function ProductList() {
 
           <label className="theme-select">
             Sortera
-            <select value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value)}
+            >
               {Object.entries(SORT_OPTIONS).map(([key, { label }]) => (
                 <option key={key} value={key}>
                   {label}
@@ -107,8 +132,8 @@ export default function ProductList() {
           <div className="view-toggle">
             <button
               type="button"
-              className={view === 'grid' ? 'active' : ''}
-              onClick={() => setView('grid')}
+              className={view === "grid" ? "active" : ""}
+              onClick={() => setView("grid")}
               aria-label="Visa som rutor"
               title="Rutor"
             >
@@ -116,8 +141,8 @@ export default function ProductList() {
             </button>
             <button
               type="button"
-              className={view === 'list' ? 'active' : ''}
-              onClick={() => setView('list')}
+              className={view === "list" ? "active" : ""}
+              onClick={() => setView("list")}
               aria-label="Visa som lista"
               title="Lista"
             >

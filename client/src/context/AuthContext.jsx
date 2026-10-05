@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../api/supabaseClient';
+import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "../api/supabaseClient";
 
 const AuthContext = createContext(null);
 
@@ -15,9 +15,11 @@ export function AuthProvider({ children }) {
       setSessionLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+      },
+    );
 
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -30,12 +32,12 @@ export function AuthProvider({ children }) {
     }
     setProfileLoading(true);
     supabase
-      .from('profiles')
-      .select('role, first_name, last_name, email')
-      .eq('id', session.user.id)
+      .from("profiles")
+      .select("role, first_name, last_name, email")
+      .eq("id", session.user.id)
       .single()
       .then(({ data, error }) => {
-        if (error) console.error('Profile fetch error:', error);
+        if (error) console.error("Profile fetch error:", error);
         setProfile(data);
         setProfileLoading(false);
       });
@@ -45,9 +47,10 @@ export function AuthProvider({ children }) {
     session,
     user: session?.user ?? null,
     token: session?.access_token ?? null,
-    isAdmin: profile?.role === 'admin',
+    isAdmin: profile?.role === "admin",
     loading: sessionLoading || profileLoading,
-    signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
+    signIn: (email, password) =>
+      supabase.auth.signInWithPassword({ email, password }),
     signUp: (email, password) => supabase.auth.signUp({ email, password }),
     signOut: () => supabase.auth.signOut(),
   };

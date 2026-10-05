@@ -15,7 +15,6 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.5",
-    "@types/nodemailer": "^8.0.1",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.12",
@@ -25,8 +24,6 @@
     "@supabase/supabase-js": "^2.112.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "nodemailer": "^9.0.5",
-    "resend": "^6.20.0"
+    "express": "^5.2.1"
   }
 }

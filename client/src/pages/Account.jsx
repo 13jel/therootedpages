@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { fetchMyProfile, updateMyProfile } from '../api/account';
-import { apiFetch } from '../api/apiClient';
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { fetchMyProfile, updateMyProfile } from "../api/account";
+import { apiFetch } from "../api/apiClient";
 
 export default function Account() {
   const { user, token } = useAuth();
 
-  const [form, setForm] = useState({ first_name: '', last_name: '', phone: '', address: '' });
+  const [form, setForm] = useState({
+    first_name: "",
+    last_name: "",
+    phone: "",
+    address: "",
+  });
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -21,16 +26,16 @@ export default function Account() {
     fetchMyProfile(user.id)
       .then((data) =>
         setForm({
-          first_name: data.first_name || '',
-          last_name: data.last_name || '',
-          phone: data.phone || '',
-          address: data.address || '',
-        })
+          first_name: data.first_name || "",
+          last_name: data.last_name || "",
+          phone: data.phone || "",
+          address: data.address || "",
+        }),
       )
       .catch((err) => setError(err.message))
       .finally(() => setLoadingProfile(false));
 
-    apiFetch('/api/orders/mine', { token })
+    apiFetch("/api/orders/mine", { token })
       .then(setOrders)
       .catch((err) => setError(err.message))
       .finally(() => setLoadingOrders(false));
@@ -70,28 +75,45 @@ export default function Account() {
           <form onSubmit={handleSubmit}>
             <label>
               Förnamn
-              <input name="first_name" value={form.first_name} onChange={handleChange} />
+              <input
+                name="first_name"
+                value={form.first_name}
+                onChange={handleChange}
+              />
             </label>
 
             <label>
               Efternamn
-              <input name="last_name" value={form.last_name} onChange={handleChange} />
+              <input
+                name="last_name"
+                value={form.last_name}
+                onChange={handleChange}
+              />
             </label>
 
             <label>
               Telefonnummer
-              <input name="phone" type="tel" value={form.phone} onChange={handleChange} />
+              <input
+                name="phone"
+                type="tel"
+                value={form.phone}
+                onChange={handleChange}
+              />
             </label>
 
             <label>
               Standardadress
-              <textarea name="address" value={form.address} onChange={handleChange} />
+              <textarea
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+              />
             </label>
 
             {error && <p className="form-error">{error}</p>}
 
             <button type="submit" disabled={saving}>
-              {saving ? 'Sparar...' : 'Spara uppgifter'}
+              {saving ? "Sparar..." : "Spara uppgifter"}
             </button>
             {saved && <p className="save-confirmation">Sparat!</p>}
           </form>
@@ -110,9 +132,13 @@ export default function Account() {
               <li key={order.id} className="my-order-row">
                 <div className="my-order-header">
                   <span>Order #{order.id}</span>
-                  <span className={`status-badge status-${order.status}`}>{order.status}</span>
+                  <span className={`status-badge status-${order.status}`}>
+                    {order.status}
+                  </span>
                   <span>{order.total} slantar</span>
-                  <span>{new Date(order.created_at).toLocaleDateString('sv-SE')}</span>
+                  <span>
+                    {new Date(order.created_at).toLocaleDateString("sv-SE")}
+                  </span>
                 </div>
                 <ul className="order-items-list">
                   {order.order_items.map((item) => (

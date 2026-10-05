@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
-import { useCurrency } from '../context/CurrencyContext';
-import { CURRENCY_LABELS } from '../utils/currency';
-import { createOrder } from '../api/orders';
-import { fetchMyProfile } from '../api/account';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import { useCurrency } from "../context/CurrencyContext";
+import { CURRENCY_LABELS } from "../utils/currency";
+import { createOrder } from "../api/orders";
+import { fetchMyProfile } from "../api/account";
 
 export default function Cart() {
   const { user, token, session } = useAuth();
@@ -14,7 +14,7 @@ export default function Cart() {
   const userId = user?.id;
 
   const [error, setError] = useState(null);
-  const [shippingAddress, setShippingAddress] = useState('');
+  const [shippingAddress, setShippingAddress] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [orderDone, setOrderDone] = useState(null);
@@ -43,7 +43,9 @@ export default function Cart() {
 
   async function handleQuantityChange(item, newQuantity) {
     if (newQuantity > item.product.stock) {
-      setError(`Endast ${item.product.stock} st av "${item.product.name}" finns i lager.`);
+      setError(
+        `Endast ${item.product.stock} st av "${item.product.name}" finns i lager.`,
+      );
       return;
     }
     setUpdatingId(item.id);
@@ -86,7 +88,7 @@ export default function Cart() {
     return (
       <div className="cart-page">
         <h1>Tack för din beställning!</h1>
-        <p>Order #{orderDone.id} har lagts. En faktura skickas till din e-post.</p>
+        <p>Order #{orderDone.id} har lagts. Du hittar den under Mina sidor.</p>
       </div>
     );
   }
@@ -96,7 +98,9 @@ export default function Cart() {
       <div className="cart-page">
         <h1>Varukorg</h1>
         <p>Din varukorg är tom.</p>
-        <Link to="/products" className="cta-button">Se produkter</Link>
+        <Link to="/products" className="cta-button">
+          Se produkter
+        </Link>
       </div>
     );
   }
@@ -110,7 +114,10 @@ export default function Cart() {
       <ul className="cart-items">
         {items.map((item) => (
           <li key={item.id} className="cart-item">
-            <Link to={`/products/${item.product.id}`} className="cart-item-name">
+            <Link
+              to={`/products/${item.product.id}`}
+              className="cart-item-name"
+            >
               {item.product.name}
             </Link>
 
@@ -141,8 +148,8 @@ export default function Cart() {
       <p className="cart-total">Totalt: {formatPrice(total)}</p>
       {currency !== 'SLANTAR' && (
         <p className="currency-note">
-          Priserna visas som en uppskattning i {CURRENCY_LABELS[currency]}. Ordern och
-          fakturan registreras i slantar ({total} slantar).
+          Priserna visas som en uppskattning i {CURRENCY_LABELS[currency]}. Ordern
+          registreras i slantar ({total} slantar).
         </p>
       )}
 
@@ -150,11 +157,15 @@ export default function Cart() {
         <div className="cart-login-prompt">
           <h2>Nästan klart</h2>
           <p>
-            Logga in eller skapa ett konto för att slutföra köpet. Din varukorg sparas och
-            följer med.
+            Logga in eller skapa ett konto för att slutföra köpet. Din varukorg
+            sparas och följer med.
           </p>
           <div className="confirm-actions">
-            <Link to="/login" state={{ from: { pathname: '/cart' } }} className="cta-button">
+            <Link
+              to="/login"
+              state={{ from: { pathname: "/cart" } }}
+              className="cta-button"
+            >
               Logga in
             </Link>
             <Link to="/register" className="cta-button">
@@ -179,16 +190,20 @@ export default function Cart() {
         <div className="confirm-dialog">
           <h2>Bekräfta köp</h2>
           <p>
-            Du köper {items.length} {items.length === 1 ? 'vara' : 'varor'} för{' '}
+            Du köper {items.length} {items.length === 1 ? "vara" : "varor"} för{" "}
             <strong>{total} slantar</strong>.
           </p>
           <p>Levereras till: {shippingAddress}</p>
 
           <div className="confirm-actions">
             <button onClick={handleConfirmPurchase} disabled={placing}>
-              {placing ? 'Bearbetar...' : 'Bekräfta köp'}
+              {placing ? "Bearbetar..." : "Bekräfta köp"}
             </button>
-            <button type="button" onClick={() => setConfirming(false)} disabled={placing}>
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              disabled={placing}
+            >
               Avbryt
             </button>
           </div>

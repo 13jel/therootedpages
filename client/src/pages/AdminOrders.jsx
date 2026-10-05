@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { fetchAllOrders, updateOrderStatus } from '../api/adminOrders';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { fetchAllOrders, updateOrderStatus } from "../api/adminOrders";
 
-const STATUSES = ['Beställd', 'Behandlas', 'Levererad', 'Återbetald'];
+const STATUSES = ["Beställd", "Behandlas", "Levererad", "Återbetald"];
 
 export default function AdminOrders() {
   const { token } = useAuth();
@@ -24,7 +24,9 @@ export default function AdminOrders() {
     try {
       const updated = await updateOrderStatus(token, orderId, newStatus);
       setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: updated.status } : o))
+        prev.map((o) =>
+          o.id === orderId ? { ...o, status: updated.status } : o,
+        ),
       );
     } catch (err) {
       setError(err.message);
@@ -38,7 +40,9 @@ export default function AdminOrders() {
       <nav className="admin-subnav">
         <Link to="/admin/products">Produkter</Link>
         <Link to="/admin/collections">Kollektioner</Link>
-        <Link to="/admin/orders" className="active">Ordrar</Link>
+        <Link to="/admin/orders" className="active">
+          Ordrar
+        </Link>
         <Link to="/admin/gallery">Galleri</Link>
       </nav>
 
@@ -55,13 +59,14 @@ export default function AdminOrders() {
               <span>Order #{order.id}</span>
               <span>{order.profiles?.email}</span>
               <span>{order.total} slantar</span>
-              <span>{new Date(order.created_at).toLocaleString('sv-SE')}</span>
+              <span>{new Date(order.created_at).toLocaleString("sv-SE")}</span>
             </div>
 
             <ul className="order-items-list">
               {order.order_items.map((item) => (
                 <li key={item.id}>
-                  {item.products?.name} × {item.quantity} ({item.unit_price} slantar/st)
+                  {item.products?.name} × {item.quantity} ({item.unit_price}{" "}
+                  slantar/st)
                 </li>
               ))}
             </ul>

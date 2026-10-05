@@ -4,9 +4,7 @@ import cors from "cors";
 import productsRouter from "./product-routes.js";
 import cartRouter from "./cart-routes.js";
 import orderRouter from "./order-routes.js";
-//import messagesRouter from "./routes/messages.js";
 import galleryRouter from "./gallery-routes.js";
-import contactRouter from "./contact-routes.js";
 import collectionRouter from "./collection-routes.js";
 import currencyRouter from "./currency-routes.js";
 
@@ -17,9 +15,7 @@ app.use(cors());
 app.use("/api/products", productsRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/orders", orderRouter);
-//app.use("/api/messages", messagesRouter);
 app.use("/api/gallery", galleryRouter);
-app.use("/api/contact", contactRouter);
 app.use("/api/collections", collectionRouter);
 app.use("/api/currency", currencyRouter);
 

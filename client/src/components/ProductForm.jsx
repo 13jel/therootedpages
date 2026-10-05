@@ -1,19 +1,24 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../api/supabaseClient';
-import { fetchCollections } from '../api/collections';
-import { uploadProductImage } from '../utils/image';
+import { useState, useEffect } from "react";
+import { supabase } from "../api/supabaseClient";
+import { fetchCollections } from "../api/collections";
+import { uploadProductImage } from "../utils/image";
 
 const emptyProduct = {
-  name: '',
-  description: '',
-  price: '',
-  stock: '',
-  image_url: '',
-  category: '',
-  theme: '',
+  name: "",
+  description: "",
+  price: "",
+  stock: "",
+  image_url: "",
+  category: "",
+  theme: "",
 };
 
-export default function ProductForm({ initialProduct, mode = 'create', onSubmit, onCancel }) {
+export default function ProductForm({
+  initialProduct,
+  mode = "create",
+  onSubmit,
+  onCancel,
+}) {
   const [form, setForm] = useState(initialProduct || emptyProduct);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(initialProduct?.image_url || null);
@@ -21,11 +26,13 @@ export default function ProductForm({ initialProduct, mode = 'create', onSubmit,
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [collections, setCollections] = useState([]);
-  
-  const isEditing = mode === 'edit';
+
+  const isEditing = mode === "edit";
 
   useEffect(() => {
-    fetchCollections().then(setCollections).catch(() => {});
+    fetchCollections()
+      .then(setCollections)
+      .catch(() => {});
   }, []);
 
   function handleChange(e) {
@@ -82,7 +89,11 @@ export default function ProductForm({ initialProduct, mode = 'create', onSubmit,
 
       <label>
         Beskrivning
-        <textarea name="description" value={form.description} onChange={handleChange} />
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+        />
       </label>
 
       <label>
@@ -119,13 +130,25 @@ export default function ProductForm({ initialProduct, mode = 'create', onSubmit,
         <img
           src={preview}
           alt="Förhandsvisning"
-          style={{ width: 120, height: 150, objectFit: 'contain', border: '2.5px solid var(--color-ink)', borderRadius: 8, background: 'var(--color-paper)' }}
+          style={{
+            width: 120,
+            height: 150,
+            objectFit: "contain",
+            border: "2.5px solid var(--color-ink)",
+            borderRadius: 8,
+            background: "var(--color-paper)",
+          }}
         />
       )}
 
       <label>
         Typ
-        <select name="category" value={form.category} onChange={handleChange} required>
+        <select
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          required
+        >
           <option value="">Välj typ</option>
           <option value="Posters">Posters</option>
           <option value="Tyg">Tyg</option>
@@ -137,7 +160,7 @@ export default function ProductForm({ initialProduct, mode = 'create', onSubmit,
         Tema
         <input
           name="theme"
-          value={form.theme || ''}
+          value={form.theme || ""}
           onChange={handleChange}
           placeholder="t.ex. Djur, Musik, Botanik"
         />
@@ -147,12 +170,14 @@ export default function ProductForm({ initialProduct, mode = 'create', onSubmit,
         Kollektion (valfritt)
         <select
           name="collection_id"
-          value={form.collection_id || ''}
+          value={form.collection_id || ""}
           onChange={handleChange}
         >
           <option value="">Ingen kollektion</option>
           {collections.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
         </select>
       </label>
@@ -161,7 +186,13 @@ export default function ProductForm({ initialProduct, mode = 'create', onSubmit,
 
       <div className="form-actions">
         <button type="submit" disabled={saving}>
-          {uploading ? 'Laddar upp bild...' : saving ? 'Sparar...' : isEditing ? 'Spara ändringar' : 'Lägg till produkt'}
+          {uploading
+            ? "Laddar upp bild..."
+            : saving
+              ? "Sparar..."
+              : isEditing
+                ? "Spara ändringar"
+                : "Lägg till produkt"}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} disabled={saving}>

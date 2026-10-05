@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function About() {
   return (
     <div className="about-page">
@@ -19,21 +21,16 @@ export default function About() {
           Produkterna på sidan går att lägga i varukorg och "beställa" precis som i en riktig
           butik, för att visa hela flödet från produktval till order. Men <strong>inga fysiska
           varor skickas</strong> och <strong>ingen riktig betalning sker</strong> — valutan
-          "slantar" är påhittad för uppgiften. En bekräftelsefaktura skickas via mejl som en del
-          av demonstrationen, men det är ingen riktig kvittens på köp.
-        </p>
-        <p>
-          Om du skulle vilja köpa en tapet eller tygprodukt på riktigt finns de flesta sömlösa mönster att köpa
-          via min shop på <a href="https://www.spoonflower.com/profiles/therootedpages">Spoonflower</a>.
+          "slantar" är påhittad för uppgiften. Dina beställningar hittar du under Mina sidor.
         </p>
       </section>
 
       <section className="about-section">
         <h2>Galleriet är på riktigt</h2>
         <p>
-          Till skillnad från produkterna tar jag emot riktiga förfrågningar via
-          kontaktformuläret i <a href="/gallery">galleriet</a> — om du vill beställa en
-          logotyp eller liknande hör jag gärna av mig.
+          Till skillnad från produkterna tar jag faktiskt emot riktiga förfrågningar via mejl
+          från <Link to="/gallery">galleriet</Link> — om du vill beställa en logotyp eller
+          liknande hör jag gärna av mig.
         </p>
       </section>
 

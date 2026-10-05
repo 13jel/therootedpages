@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { useProducts } from '../hooks/useProducts';
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
+import { useProducts } from "../hooks/useProducts";
 
 const MAX_SLIDES = 12;
 
@@ -33,7 +33,10 @@ export default function HeroCarousel() {
     <div className="hero-marquee">
       <div
         className="hero-marquee-track"
-        style={{ '--marquee-duration': `${duration}s`, '--marquee-count': slides.length }}
+        style={{
+          "--marquee-duration": `${duration}s`,
+          "--marquee-count": slides.length,
+        }}
       >
         {track.map((product, i) => (
           <Link

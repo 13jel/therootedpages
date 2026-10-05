@@ -1,16 +1,23 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { apiFetch } from '../api/apiClient';
-import { CURRENCIES, formatMoney } from '../utils/currency';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { apiFetch } from "../api/apiClient";
+import { CURRENCIES, formatMoney } from "../utils/currency";
 
 const CurrencyContext = createContext(null);
-const STORAGE_KEY = 'trp_currency';
+const STORAGE_KEY = "trp_currency";
 
 function readStoredCurrency() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return CURRENCIES.includes(stored) ? stored : 'SLANTAR';
+    return CURRENCIES.includes(stored) ? stored : "SLANTAR";
   } catch {
-    return 'SLANTAR';
+    return "SLANTAR";
   }
 }
 
@@ -22,7 +29,7 @@ export function CurrencyProvider({ children }) {
 
   useEffect(() => {
     let cancelled = false;
-    apiFetch('/api/currency/rates')
+    apiFetch("/api/currency/rates")
       .then((data) => {
         if (cancelled) return;
         setRates(data.rates);
@@ -37,7 +44,7 @@ export function CurrencyProvider({ children }) {
   }, []);
 
   // Går kurserna inte att hämta visas slantar, men valet sparas till nästa gång
-  const currency = ratesError ? 'SLANTAR' : chosen;
+  const currency = ratesError ? "SLANTAR" : chosen;
 
   const setCurrency = useCallback((next) => {
     if (!CURRENCIES.includes(next)) return;
@@ -51,15 +58,19 @@ export function CurrencyProvider({ children }) {
 
   const formatPrice = useCallback(
     (amount) => formatMoney(amount, currency, rates?.[currency]),
-    [currency, rates]
+    [currency, rates],
   );
 
   const value = useMemo(
     () => ({ currency, setCurrency, formatPrice, ratesDate, ratesError }),
-    [currency, setCurrency, formatPrice, ratesDate, ratesError]
+    [currency, setCurrency, formatPrice, ratesDate, ratesError],
   );
 
-  return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
+  return (
+    <CurrencyContext.Provider value={value}>
+      {children}
+    </CurrencyContext.Provider>
+  );
 }
 
 export function useCurrency() {

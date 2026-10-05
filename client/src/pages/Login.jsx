@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || "/";
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,7 +24,7 @@ export default function Login() {
     setLoading(false);
 
     if (signInError) {
-      setError('Fel e-post eller lösenord.');
+      setError("Fel e-post eller lösenord.");
       return;
     }
 
@@ -58,7 +58,7 @@ export default function Login() {
         {error && <p className="form-error">{error}</p>}
 
         <button type="submit" disabled={loading}>
-          {loading ? 'Loggar in...' : 'Logga in'}
+          {loading ? "Loggar in..." : "Logga in"}
         </button>
       </form>
 

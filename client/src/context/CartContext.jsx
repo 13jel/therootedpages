@@ -1,12 +1,23 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { useAuth } from './AuthContext';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { useAuth } from "./AuthContext";
 import {
   fetchCart,
   addToCart as apiAddToCart,
   updateCartItemQuantity,
   removeFromCart,
-} from '../api/cart';
-import { readGuestCart, writeGuestCart, clearGuestCart } from '../utils/guestCart';
+} from "../api/cart";
+import {
+  readGuestCart,
+  writeGuestCart,
+  clearGuestCart,
+} from "../utils/guestCart";
 
 const CartContext = createContext(null);
 
@@ -97,7 +108,9 @@ export function CartProvider({ children }) {
       if (qty < 1) return;
 
       const next = existing
-        ? guestItems.map((i) => (i.product.id === product.id ? { ...i, quantity: qty } : i))
+        ? guestItems.map((i) =>
+            i.product.id === product.id ? { ...i, quantity: qty } : i,
+          )
         : [
             ...guestItems,
             {
@@ -115,21 +128,24 @@ export function CartProvider({ children }) {
       setGuestItems(next);
       writeGuestCart(next);
     },
-    [session, token, userId, guestItems]
+    [session, token, userId, guestItems],
   );
 
   const removeItem = useCallback(
     async (item) => {
       if (session) {
         await removeFromCart(token, item.id);
-        setDb((prev) => ({ ...prev, items: prev.items.filter((i) => i.id !== item.id) }));
+        setDb((prev) => ({
+          ...prev,
+          items: prev.items.filter((i) => i.id !== item.id),
+        }));
         return;
       }
       const next = guestItems.filter((i) => i.id !== item.id);
       setGuestItems(next);
       writeGuestCart(next);
     },
-    [session, token, guestItems]
+    [session, token, guestItems],
   );
 
   const setQuantity = useCallback(
@@ -142,15 +158,19 @@ export function CartProvider({ children }) {
         await updateCartItemQuantity(token, item.product.id, quantity);
         setDb((prev) => ({
           ...prev,
-          items: prev.items.map((i) => (i.id === item.id ? { ...i, quantity } : i)),
+          items: prev.items.map((i) =>
+            i.id === item.id ? { ...i, quantity } : i,
+          ),
         }));
         return;
       }
-      const next = guestItems.map((i) => (i.id === item.id ? { ...i, quantity } : i));
+      const next = guestItems.map((i) =>
+        i.id === item.id ? { ...i, quantity } : i,
+      );
       setGuestItems(next);
       writeGuestCart(next);
     },
-    [session, token, guestItems, removeItem]
+    [session, token, guestItems, removeItem],
   );
 
   const refresh = useCallback(async () => {
@@ -159,7 +179,15 @@ export function CartProvider({ children }) {
     setDb({ userId, items: data });
   }, [session, token, userId]);
 
-  const value = { items, loading, itemCount, addItem, removeItem, setQuantity, refresh };
+  const value = {
+    items,
+    loading,
+    itemCount,
+    addItem,
+    removeItem,
+    setQuantity,
+    refresh,
+  };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

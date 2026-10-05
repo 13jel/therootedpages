@@ -1,7 +1,7 @@
 export function parseThemes(themeString) {
   if (!themeString) return [];
   return themeString
-    .split(',')
+    .split(",")
     .map((t) => t.trim())
     .filter(Boolean);
 }
