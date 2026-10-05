@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { fetchCart, removeFromCart, updateCartItemQuantity } from '../api/cart';
+import { useCart } from '../context/CartContext';
 import { createOrder } from '../api/orders';
 import { fetchMyProfile } from '../api/account';
 
 export default function Cart() {
-  const { user, token, session, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+  const { user, token, session } = useAuth();
+  const { items, loading, setQuantity, removeItem, refresh } = useCart();
+  const userId = user?.id;
 
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [shippingAddress, setShippingAddress] = useState('');
   const [confirming, setConfirming] = useState(false);
@@ -18,52 +17,35 @@ export default function Cart() {
   const [orderDone, setOrderDone] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
 
+  // Förifyll leveransadress med kundens sparade standardadress, om den finns
   useEffect(() => {
-    if (authLoading) return;
-    if (!session) {
-      navigate('/login');
-      return;
-    }
-
-    fetchCart(token)
-      .then(setItems)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-
-    // Förifyll leveransadress med kundens sparade standardadress, om den finns
-    fetchMyProfile(user.id)
+    if (!userId) return;
+    fetchMyProfile(userId)
       .then((profile) => {
         if (profile.address) setShippingAddress(profile.address);
       })
       .catch(() => {
-        // Ingen adress sparad än, eller kunde inte hämtas — inget att göra, bara låt fältet vara tomt
+        // ingen sparad adress, fältet får vara tomt
       });
-  }, [authLoading, session, token, navigate, user]);
+  }, [userId]);
 
-  async function handleRemove(cartItemId) {
+  async function handleRemove(item) {
     try {
-      await removeFromCart(token, cartItemId);
-      setItems((prev) => prev.filter((i) => i.id !== cartItemId));
+      await removeItem(item);
+      setError(null);
     } catch (err) {
       setError(err.message);
     }
   }
 
   async function handleQuantityChange(item, newQuantity) {
-    if (newQuantity < 1) {
-      handleRemove(item.id);
-      return;
-    }
     if (newQuantity > item.product.stock) {
       setError(`Endast ${item.product.stock} st av "${item.product.name}" finns i lager.`);
       return;
     }
     setUpdatingId(item.id);
     try {
-      await updateCartItemQuantity(token, item.product.id, newQuantity);
-      setItems((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, quantity: newQuantity } : i))
-      );
+      await setQuantity(item, newQuantity);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -83,8 +65,8 @@ export default function Cart() {
     try {
       const order = await createOrder(token, shippingAddress);
       setOrderDone(order);
-      setItems([]);
       setConfirming(false);
+      refresh().catch(() => {});
     } catch (err) {
       setError(err.message);
       setConfirming(false);
@@ -95,7 +77,7 @@ export default function Cart() {
 
   const total = items.reduce((sum, i) => sum + i.quantity * i.product.price, 0);
 
-  if (authLoading || loading) return <p>Laddar...</p>;
+  if (loading) return <p>Laddar...</p>;
 
   if (orderDone) {
     return (
@@ -111,6 +93,7 @@ export default function Cart() {
       <div className="cart-page">
         <h1>Varukorg</h1>
         <p>Din varukorg är tom.</p>
+        <Link to="/products" className="cta-button">Se produkter</Link>
       </div>
     );
   }
@@ -147,14 +130,30 @@ export default function Cart() {
             </div>
 
             <span>{item.quantity * item.product.price} slantar</span>
-            <button onClick={() => handleRemove(item.id)}>Ta bort</button>
+            <button onClick={() => handleRemove(item)}>Ta bort</button>
           </li>
         ))}
       </ul>
 
       <p className="cart-total">Totalt: {total} slantar</p>
 
-      {!confirming ? (
+      {!session ? (
+        <div className="cart-login-prompt">
+          <h2>Nästan klart</h2>
+          <p>
+            Logga in eller skapa ett konto för att slutföra köpet. Din varukorg sparas och
+            följer med.
+          </p>
+          <div className="confirm-actions">
+            <Link to="/login" state={{ from: { pathname: '/cart' } }} className="cta-button">
+              Logga in
+            </Link>
+            <Link to="/register" className="cta-button">
+              Skapa konto
+            </Link>
+          </div>
+        </div>
+      ) : !confirming ? (
         <form onSubmit={handleGoToConfirm} className="checkout-form">
           <label>
             Leveransadress

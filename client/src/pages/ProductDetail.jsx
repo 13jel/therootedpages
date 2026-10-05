@@ -1,17 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 import { useProduct } from '../hooks/useProduct';
-import { addToCart } from '../api/cart';
-import { parseThemes } from '../utils/theme';
 import { supabase } from '../api/supabaseClient';
+import { parseThemes } from '../utils/theme';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { product, loading, error } = useProduct(id);
-  const { token, session } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { addItem } = useCart();
   const [status, setStatus] = useState('idle');
   const [activeImage, setActiveImage] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -32,13 +29,9 @@ export default function ProductDetail() {
   }, [product]);
 
   async function handleAddToCart() {
-    if (!session) {
-      navigate('/login', { state: { from: location } });
-      return;
-    }
     setStatus('loading');
     try {
-      await addToCart(token, product.id, 1);
+      await addItem(product, 1);
       setStatus('done');
       setTimeout(() => setStatus('idle'), 1500);
     } catch {
@@ -98,20 +91,6 @@ export default function ProductDetail() {
           </div>
         )}
 
-        {product.collections && collectionProducts.length > 0 && (
-          <section className="collection-section">
-            <h2>Del av kollektionen: {product.collections.name}</h2>
-            <div className="collection-items">
-              {collectionProducts.map((p) => (
-                <Link key={p.id} to={`/products/${p.id}`} className="collection-item">
-                  {p.image_url && <img src={p.image_url} alt={p.name} />}
-                  <span>{p.name}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
         {product.description && <p className="description">{product.description}</p>}
 
         <p className="price">{product.price} slantar</p>
@@ -129,6 +108,20 @@ export default function ProductDetail() {
           {status === 'error' && 'Något gick fel'}
         </button>
       </div>
+
+      {product.collections && collectionProducts.length > 0 && (
+        <section className="collection-section">
+          <h2>Del av kollektionen: {product.collections.name}</h2>
+          <div className="collection-items">
+            {collectionProducts.map((p) => (
+              <Link key={p.id} to={`/products/${p.id}`} className="collection-item">
+                {p.image_url && <img src={p.image_url} alt={p.name} />}
+                <span>{p.name}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {lightboxOpen && (
         <div className="lightbox-overlay" onClick={() => setLightboxOpen(false)}>

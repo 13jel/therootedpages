@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 export default function Navbar() {
   const { session, isAdmin, signOut } = useAuth();
+  const { itemCount } = useCart();
   const navigate = useNavigate();
   const [quickSearch, setQuickSearch] = useState('');
 
@@ -35,13 +37,19 @@ export default function Navbar() {
             <circle cx="11" cy="11" r="7" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-        </button>      </form>
+        </button>      
+      </form>
+
 
       <div className="navbar-links">
         <Link to="/products">Produkter</Link>
         <Link to="/gallery">Galleri</Link>
 
-        {session && <Link to="/cart">Varukorg</Link>}
+        <Link to="/cart">
+          Varukorg
+          {itemCount > 0 && <span className="cart-count">{itemCount}</span>}
+        </Link>
+
         {session && <Link to="/account">Mina sidor</Link>}
         {isAdmin && <Link to="/admin/products">Admin</Link>}
 
