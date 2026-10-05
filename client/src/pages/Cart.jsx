@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
+import { CURRENCY_LABELS } from '../utils/currency';
 import { createOrder } from '../api/orders';
 import { fetchMyProfile } from '../api/account';
 
 export default function Cart() {
   const { user, token, session } = useAuth();
   const { items, loading, setQuantity, removeItem, refresh } = useCart();
+  const { currency, formatPrice } = useCurrency();
   const userId = user?.id;
 
   const [error, setError] = useState(null);
@@ -129,13 +132,19 @@ export default function Cart() {
               </button>
             </div>
 
-            <span>{item.quantity * item.product.price} slantar</span>
+            <span>{formatPrice(item.quantity * item.product.price)}</span>
             <button onClick={() => handleRemove(item)}>Ta bort</button>
           </li>
         ))}
       </ul>
 
-      <p className="cart-total">Totalt: {total} slantar</p>
+      <p className="cart-total">Totalt: {formatPrice(total)}</p>
+      {currency !== 'SLANTAR' && (
+        <p className="currency-note">
+          Priserna visas som en uppskattning i {CURRENCY_LABELS[currency]}. Ordern och
+          fakturan registreras i slantar ({total} slantar).
+        </p>
+      )}
 
       {!session ? (
         <div className="cart-login-prompt">

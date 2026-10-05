@@ -1361,3 +1361,29 @@ a.product-card {
 .about-section p {
   line-height: 1.6;
 }
+
+/* =============================================================
+   17. CURRENCY
+   ============================================================= */
+.currency-select {
+  padding: 0.35em 0.6em;
+  border: 2px solid var(--color-paper-light);
+  border-radius: 6px;
+  background: var(--color-ink);
+  color: var(--color-paper-light);
+  font-family: var(--font-body);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.currency-select option {
+  background: var(--color-ink);
+  color: var(--color-paper-light);
+}
+
+.currency-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-moss-dark);
+  text-align: right;
+}

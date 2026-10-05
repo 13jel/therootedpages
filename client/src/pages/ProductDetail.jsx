@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { useProduct } from '../hooks/useProduct';
 import { supabase } from '../api/supabaseClient';
 import { parseThemes } from '../utils/theme';
@@ -9,6 +10,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const { product, loading, error } = useProduct(id);
   const { addItem } = useCart();
+  const { formatPrice } = useCurrency();
   const [status, setStatus] = useState('idle');
   const [activeImage, setActiveImage] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -93,7 +95,7 @@ export default function ProductDetail() {
 
         {product.description && <p className="description">{product.description}</p>}
 
-        <p className="price">{product.price} slantar</p>
+        <p className="price">{formatPrice(product.price)}</p>
         <p className="stock">
           {product.stock > 0 ? `${product.stock} i lager` : 'Slut i lager'}
         </p>

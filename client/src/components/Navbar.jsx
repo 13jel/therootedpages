@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import CurrencySelect from './CurrencySelect';
 
 export default function Navbar() {
   const { session, isAdmin, signOut } = useAuth();
@@ -52,6 +53,8 @@ export default function Navbar() {
 
         {session && <Link to="/account">Mina sidor</Link>}
         {isAdmin && <Link to="/admin/products">Admin</Link>}
+
+        <CurrencySelect />
 
         {session ? (
           <button onClick={handleSignOut}>Logga ut</button>

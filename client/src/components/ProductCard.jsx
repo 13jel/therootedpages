@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
+  const { formatPrice } = useCurrency();
   const [status, setStatus] = useState('idle');
 
   async function handleAddToCart(e) {
@@ -26,7 +28,7 @@ export default function ProductCard({ product }) {
 
       <div className="product-card-body">
         <h3>{product.name}</h3>
-        <p className="price">{product.price} slantar</p>
+        <p className="price">{formatPrice(product.price)}</p>
         <p className="stock">
           {product.stock > 0 ? `${product.stock} i lager` : 'Slut i lager'}
         </p>
