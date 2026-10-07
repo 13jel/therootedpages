@@ -7,18 +7,85 @@ import {
   updateProduct,
   deleteProduct,
 } from "../api/adminProducts";
+import { fetchCollections } from "../api/collections";
+import { TYPE_ORDER } from "../utils/variants";
 import ProductForm from "../components/ProductForm";
 import ProductGallery from "../components/ProductGallery";
+
+const SORT_LABELS = {
+  "name-asc": "Namn (A–Ö)",
+  "name-desc": "Namn (Ö–A)",
+  "price-asc": "Pris (lägst först)",
+  "price-desc": "Pris (högst först)",
+  "stock-asc": "Lagersaldo (lägst först)",
+  "stock-desc": "Lagersaldo (högst först)",
+  collection: "Kollektion",
+  type: "Typ",
+  newest: "Nyast först",
+};
+
+function sortProducts(list, key, collectionName) {
+  const text = (a, b) => (a || "").localeCompare(b || "", "sv");
+  const byName = (a, b) => text(a.name, b.name);
+  const typeRank = (p) => {
+    const i = TYPE_ORDER.indexOf(p.category);
+    return i === -1 ? 99 : i;
+  };
+  const sorted = [...list];
+
+  switch (key) {
+    case "name-desc":
+      return sorted.sort((a, b) => byName(b, a));
+    case "price-asc":
+      return sorted.sort(
+        (a, b) => Number(a.price) - Number(b.price) || byName(a, b),
+      );
+    case "price-desc":
+      return sorted.sort(
+        (a, b) => Number(b.price) - Number(a.price) || byName(a, b),
+      );
+    case "stock-asc":
+      return sorted.sort((a, b) => a.stock - b.stock || byName(a, b));
+    case "stock-desc":
+      return sorted.sort((a, b) => b.stock - a.stock || byName(a, b));
+    case "collection":
+      return sorted.sort((a, b) => {
+        const ca = collectionName(a);
+        const cb = collectionName(b);
+        if (!ca !== !cb) return ca ? -1 : 1; // produkter utan kollektion hamnar sist
+        return (
+          text(ca, cb) ||
+          typeRank(a) - typeRank(b) ||
+          text(a.color, b.color) ||
+          byName(a, b)
+        );
+      });
+    case "type":
+      return sorted.sort(
+        (a, b) =>
+          typeRank(a) - typeRank(b) || text(a.color, b.color) || byName(a, b),
+      );
+    case "newest":
+      return sorted.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      );
+    case "name-asc":
+    default:
+      return sorted.sort(byName);
+  }
+}
 
 export default function AdminProducts() {
   const { token } = useAuth();
   const [products, setProducts] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [duplicateSource, setDuplicateSource] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [justCreated, setJustCreated] = useState(null);
+  const [sortKey, setSortKey] = useState("name-asc");
 
   useEffect(() => {
     if (!token) return;
@@ -28,6 +95,18 @@ export default function AdminProducts() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
+
+  useEffect(() => {
+    fetchCollections()
+      .then(setCollections)
+      .catch(() => {});
+  }, []);
+
+  const collectionNames = Object.fromEntries(
+    collections.map((c) => [c.id, c.name]),
+  );
+  const collectionName = (p) => collectionNames[p.collection_id] || null;
+  const sortedProducts = sortProducts(products, sortKey, collectionName);
 
   async function handleCreate(product) {
     const newProduct = await createProduct(token, product);
@@ -145,41 +224,72 @@ export default function AdminProducts() {
         {loading && <p>Laddar...</p>}
         {error && <p className="form-error">{error}</p>}
 
+        {products.length > 1 && (
+          <label className="theme-select admin-sort">
+            Sortera
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value)}
+            >
+              {Object.entries(SORT_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
         <ul className="admin-product-list">
-          {products.map((product) => (
-            <li key={product.id}>
-              {editingId === product.id ? (
-                <div className="admin-edit-block">
-                  <ProductForm
-                    initialProduct={product}
-                    mode="edit"
-                    onSubmit={(updates) => handleUpdate(product.id, updates)}
-                    onCancel={() => setEditingId(null)}
-                  />
-                  <ProductGallery productId={product.id} />
-                </div>
-              ) : (
-                <div className="admin-product-row">
-                  <span>{product.name}</span>
-                  <span>{product.price} slantar</span>
-                  <span>{product.stock} st</span>
-                  <button onClick={() => setEditingId(product.id)}>
-                    Redigera
-                  </button>
-                  <button onClick={() => handleDuplicate(product)}>
-                    Duplicera
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product)}
-                    disabled={deletingId === product.id}
-                    className="danger-button"
-                  >
-                    {deletingId === product.id ? "Tar bort..." : "Ta bort"}
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
+          {sortedProducts.map((product) => {
+            const meta = [
+              product.category,
+              product.color,
+              collectionName(product),
+            ]
+              .filter(Boolean)
+              .join(" · ");
+
+            return (
+              <li key={product.id}>
+                {editingId === product.id ? (
+                  <div className="admin-edit-block">
+                    <ProductForm
+                      initialProduct={product}
+                      mode="edit"
+                      onSubmit={(updates) => handleUpdate(product.id, updates)}
+                      onCancel={() => setEditingId(null)}
+                    />
+                    <ProductGallery productId={product.id} />
+                  </div>
+                ) : (
+                  <div className="admin-product-row">
+                    <span>
+                      {product.name}
+                      {meta && (
+                        <small className="admin-product-meta">{meta}</small>
+                      )}
+                    </span>
+                    <span>{product.price} slantar</span>
+                    <span>{product.stock} st</span>
+                    <button onClick={() => setEditingId(product.id)}>
+                      Redigera
+                    </button>
+                    <button onClick={() => handleDuplicate(product)}>
+                      Duplicera
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product)}
+                      disabled={deletingId === product.id}
+                      className="danger-button"
+                    >
+                      {deletingId === product.id ? "Tar bort..." : "Ta bort"}
+                    </button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
     </div>
