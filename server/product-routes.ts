@@ -5,12 +5,15 @@ import { AuthRequest } from "./types.js";
 
 const productsRouter = Router();
 
-productsRouter.get("/", async (req: Request, res: Response) => {
+productsRouter.get("/", async (_req: Request, res: Response) => {
   const { data, error } = await supabaseAdmin
     .from("products")
     .select("*, collections(id, name)")
     .eq("is_active", true);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error("Fel vid hämtning av produkter:", error);
+    return res.status(500).json({ error: error.message });
+  }
   res.json(data);
 });
 
@@ -42,6 +45,7 @@ productsRouter.post(
       category,
       theme,
       collection_id,
+      color,
     } = req.body;
     const { data, error } = await supabaseAdmin
       .from("products")
@@ -54,6 +58,7 @@ productsRouter.post(
         category,
         theme,
         collection_id: collection_id || null,
+        color: color || null,
       })
       .select()
       .single();
@@ -76,6 +81,7 @@ productsRouter.put(
       category,
       theme,
       collection_id,
+      color,
     } = req.body;
     const { data, error } = await supabaseAdmin
       .from("products")
@@ -88,6 +94,7 @@ productsRouter.put(
         category,
         theme,
         collection_id: collection_id || null,
+        color: color || null,
       })
       .eq("id", req.params.id)
       .select()

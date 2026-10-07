@@ -1,34 +1,49 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { useProduct } from "../hooks/useProduct";
 import { supabase } from "../api/supabaseClient";
 import { parseThemes } from "../utils/theme";
+import { findVariant, sortTypes, variantLabel } from "../utils/variants";
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { product, loading, error } = useProduct(id);
   const { addItem } = useCart();
   const { formatPrice } = useCurrency();
   const [status, setStatus] = useState("idle");
   const [activeImage, setActiveImage] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [collectionProducts, setCollectionProducts] = useState([]);
+  const [variantState, setVariantState] = useState({
+    collectionId: null,
+    items: [],
+  });
+
+  const collectionId = product?.collection_id ?? null;
 
   useEffect(() => {
-    if (!product?.collections?.id) {
-      setCollectionProducts([]);
-      return;
-    }
+    if (!collectionId) return;
+    let cancelled = false;
     supabase
       .from("products")
-      .select("id, name, image_url")
-      .eq("collection_id", product.collections.id)
+      .select("id, name, image_url, category, color, price, stock")
+      .eq("collection_id", collectionId)
       .eq("is_active", true)
-      .neq("id", product.id)
-      .then(({ data }) => setCollectionProducts(data || []));
-  }, [product]);
+      .order("id", { ascending: true })
+      .then(({ data }) => {
+        if (!cancelled) setVariantState({ collectionId, items: data || [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [collectionId]);
+
+  const variants =
+    collectionId && variantState.collectionId === collectionId
+      ? variantState.items
+      : [];
 
   async function handleAddToCart() {
     setStatus("loading");
@@ -41,14 +56,31 @@ export default function ProductDetail() {
     }
   }
 
-  if (loading) return <p>Laddar produkt...</p>;
+  if (loading && !product) return <p>Laddar produkt...</p>;
   if (error || !product) return <p>Produkten kunde inte hittas.</p>;
 
   const gallery = [
     product.image_url,
     ...(product.product_images?.map((i) => i.image_url) || []),
   ].filter(Boolean);
-  const mainImage = activeImage || gallery[0];
+  const mainImage =
+    activeImage && gallery.includes(activeImage) ? activeImage : gallery[0];
+
+  const isGroup = variants.length > 1;
+  const types = sortTypes([
+    ...new Set(variants.map((v) => v.category).filter(Boolean)),
+  ]);
+  const colorOptions = variants.filter((v) => v.category === product.category);
+  const title = isGroup
+    ? product.collections?.name || product.name
+    : product.name;
+  const selected = variantLabel(product);
+
+  function goToVariant(variant) {
+    if (variant && variant.id !== product.id) {
+      navigate(`/products/${variant.id}`, { replace: true });
+    }
+  }
 
   return (
     <div className="product-detail">
@@ -64,7 +96,7 @@ export default function ProductDetail() {
         >
           <img
             src={mainImage}
-            alt={product.name}
+            alt={title}
             className="product-detail-main-image"
           />
           <span className="zoom-hint">Klicka för att förstora</span>
@@ -87,9 +119,15 @@ export default function ProductDetail() {
       )}
 
       <div className="product-detail-info">
-        <h1>{product.name}</h1>
+        <h1>{title}</h1>
 
-        {product.category && <p className="category-tag">{product.category}</p>}
+        {isGroup && selected && (
+          <p className="variant-meta">Vald variant: {selected}</p>
+        )}
+
+        {!isGroup && product.category && (
+          <p className="category-tag">{product.category}</p>
+        )}
 
         {parseThemes(product.theme).length > 0 && (
           <div className="theme-tags">
@@ -98,6 +136,52 @@ export default function ProductDetail() {
                 {theme}
               </span>
             ))}
+          </div>
+        )}
+
+        {isGroup && (
+          <div className="variant-picker">
+            {types.length > 1 && (
+              <div className="variant-group">
+                <span className="variant-label">Typ</span>
+                <div className="variant-options">
+                  {types.map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      className={type === product.category ? "active" : ""}
+                      onClick={() =>
+                        goToVariant(findVariant(variants, type, product.color))
+                      }
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {colorOptions.length > 1 && (
+              <div className="variant-group">
+                <span className="variant-label">
+                  Färg{product.color ? `: ${product.color}` : ""}
+                </span>
+                <div className="variant-options">
+                  {colorOptions.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      className={`variant-swatch${v.id === product.id ? " active" : ""}`}
+                      onClick={() => goToVariant(v)}
+                      title={v.color || v.name}
+                    >
+                      {v.image_url && <img src={v.image_url} alt="" />}
+                      <span>{v.color || "Standard"}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -112,7 +196,7 @@ export default function ProductDetail() {
 
         <button
           onClick={handleAddToCart}
-          disabled={product.stock === 0 || status === "loading"}
+          disabled={product.stock === 0 || status === "loading" || loading}
         >
           {status === "loading" && "Lägger till..."}
           {status === "done" && "Tillagd!"}
@@ -120,24 +204,6 @@ export default function ProductDetail() {
           {status === "error" && "Något gick fel"}
         </button>
       </div>
-
-      {product.collections && collectionProducts.length > 0 && (
-        <section className="collection-section">
-          <h2>Del av kollektionen: {product.collections.name}</h2>
-          <div className="collection-items">
-            {collectionProducts.map((p) => (
-              <Link
-                key={p.id}
-                to={`/products/${p.id}`}
-                className="collection-item"
-              >
-                {p.image_url && <img src={p.image_url} alt={p.name} />}
-                <span>{p.name}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {lightboxOpen && (
         <div
@@ -152,7 +218,7 @@ export default function ProductDetail() {
           >
             ×
           </button>
-          <img src={mainImage} alt={product.name} className="lightbox-image" />
+          <img src={mainImage} alt={title} className="lightbox-image" />
         </div>
       )}
     </div>

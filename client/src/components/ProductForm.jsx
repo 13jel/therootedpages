@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../api/supabaseClient";
-import { fetchCollections } from "../api/collections";
 import { uploadProductImage } from "../utils/image";
+import { fetchCollections } from "../api/collections";
 
 const emptyProduct = {
   name: "",
@@ -10,7 +10,9 @@ const emptyProduct = {
   stock: "",
   image_url: "",
   category: "",
+  color: "",
   theme: "",
+  collection_id: "",
 };
 
 export default function ProductForm({
@@ -65,6 +67,7 @@ export default function ProductForm({
         price: parseFloat(form.price),
         stock: parseInt(form.stock, 10),
         collection_id: form.collection_id || null,
+        color: form.color || null,
       });
 
       if (!isEditing) {
@@ -157,6 +160,16 @@ export default function ProductForm({
       </label>
 
       <label>
+        Färg (valfritt)
+        <input
+          name="color"
+          value={form.color || ""}
+          onChange={handleChange}
+          placeholder="t.ex. Grön, Blå, Senap"
+        />
+      </label>
+
+      <label>
         Tema
         <input
           name="theme"
@@ -167,7 +180,7 @@ export default function ProductForm({
       </label>
 
       <label>
-        Kollektion (valfritt)
+        Kollektion / mönstergrupp (valfritt)
         <select
           name="collection_id"
           value={form.collection_id || ""}
@@ -181,6 +194,14 @@ export default function ProductForm({
           ))}
         </select>
       </label>
+
+      {form.collection_id && (
+        <p className="form-hint">
+          Produkter i samma kollektion visas som ett kort i butiken, där kunden
+          väljer typ och färg. Namnet visas i varukorg och på ordrar, så döp
+          gärna varianten till t.ex. "Mönstret – Färg – Typ".
+        </p>
+      )}
 
       {error && <p className="form-error">{error}</p>}
 

@@ -1307,45 +1307,7 @@ a.product-card {
 }
 
 /* =============================================================
-   14. COLLECTIONS
-   ============================================================= */
-.collection-section {
-  max-width: 720px;
-  margin: 2.5rem auto 0;
-  padding: 0 1.5rem;
-}
-
-.collection-items {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-}
-
-.collection-item {
-  flex-shrink: 0;
-  width: 120px;
-  text-decoration: none;
-  color: inherit;
-  text-align: center;
-}
-
-.collection-item img {
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
-  border: var(--border-thick);
-  border-radius: 8px;
-  margin-bottom: 0.4rem;
-}
-
-.collection-item span {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-/* =============================================================
-   15. FOOTER
+   14. FOOTER
    ============================================================= */
 .site-footer {
   text-align: center;
@@ -1366,7 +1328,7 @@ a.product-card {
 }
 
 /* =============================================================
-   16. ABOUT
+   15. ABOUT
    ============================================================= */
 .about-page {
   max-width: 700px;
@@ -1383,7 +1345,7 @@ a.product-card {
 }
 
 /* =============================================================
-   17. CURRENCY
+   16. CURRENCY
    ============================================================= */
 .currency-select {
   padding: 0.35em 0.6em;
@@ -1406,4 +1368,83 @@ a.product-card {
   font-size: 0.85rem;
   color: var(--color-moss-dark);
   text-align: right;
+}
+
+/* =============================================================
+   17. VARIANTS (mönstergrupper)
+   ============================================================= */
+.variant-meta {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-currant);
+}
+
+.variant-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.25rem 0;
+  padding: 1rem;
+  background: var(--color-paper-light);
+  border: 2px dashed var(--color-ink);
+  border-radius: 8px;
+}
+
+.variant-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.variant-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.variant-options button {
+  padding: 0.4em 1em;
+  box-shadow: none;
+  font-size: 0.9rem;
+}
+
+.variant-options button.active {
+  background: var(--color-moss);
+  color: var(--color-paper-light);
+}
+
+.variant-options button.variant-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 76px;
+  padding: 0.3rem;
+}
+
+.variant-swatch img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border: 2px solid var(--color-ink);
+  border-radius: 4px;
+}
+
+.variant-swatch span {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-word;
+}
+
+.form-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-moss-dark);
 }

@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useProducts } from "../hooks/useProducts";
+import useProducts from "../hooks/useProducts";
 import ProductCard from "../components/ProductCard";
 import { parseThemes } from "../utils/theme";
+import { buildGroups } from "../utils/variants";
 
 const TYPES = ["Posters", "Tyg", "Tapet"];
 
@@ -17,26 +18,23 @@ const SORT_OPTIONS = {
   },
   "price-asc": {
     label: "Pris (lägst först)",
-    compare: (a, b) => a.price - b.price,
+    compare: (a, b) => a.minPrice - b.minPrice,
   },
   "price-desc": {
     label: "Pris (högst först)",
-    compare: (a, b) => b.price - a.price,
+    compare: (a, b) => b.minPrice - a.minPrice,
   },
-  newest: {
-    label: "Nyast",
-    compare: (a, b) => new Date(b.created_at) - new Date(a.created_at),
-  },
+  newest: { label: "Nyast", compare: (a, b) => b.createdAt - a.createdAt },
 };
 
 export default function ProductList() {
   const { products, loading, error } = useProducts();
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("search") || "");
   const [activeType, setActiveType] = useState("Alla");
   const [activeTheme, setActiveTheme] = useState("Alla");
   const [sortKey, setSortKey] = useState("name-asc");
   const [view, setView] = useState("grid");
-  const [searchParams] = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get("search") || "");
 
   const themes = useMemo(() => {
     const unique = new Set(products.flatMap((p) => parseThemes(p.theme)));
@@ -52,6 +50,9 @@ export default function ProductList() {
       !query ||
       p.name.toLowerCase().includes(query) ||
       (p.description && p.description.toLowerCase().includes(query)) ||
+      (p.color && p.color.toLowerCase().includes(query)) ||
+      (p.collections?.name &&
+        p.collections.name.toLowerCase().includes(query)) ||
       parseThemes(p.theme).some((t) => t.toLowerCase().includes(query));
 
     const typeMatch = activeType === "Alla" || p.category === activeType;
@@ -61,7 +62,7 @@ export default function ProductList() {
     return searchMatch && typeMatch && themeMatch;
   });
 
-  const sorted = [...filtered].sort(SORT_OPTIONS[sortKey].compare);
+  const sorted = buildGroups(filtered).sort(SORT_OPTIONS[sortKey].compare);
 
   if (loading) return <p>Laddar produkter...</p>;
   if (error) return <p>Kunde inte hämta produkter: {error}</p>;
@@ -156,8 +157,8 @@ export default function ProductList() {
         <p>Inga produkter matchar din sökning/filter.</p>
       ) : (
         <div className={`product-grid view-${view}`}>
-          {sorted.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {sorted.map((group) => (
+            <ProductCard key={group.key} group={group} />
           ))}
         </div>
       )}

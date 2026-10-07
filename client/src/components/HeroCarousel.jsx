@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useProducts } from "../hooks/useProducts";
+import useProducts from "../hooks/useProducts";
+import { buildGroups } from "../utils/variants";
 
 const MAX_SLIDES = 12;
 
@@ -18,7 +19,8 @@ export default function HeroCarousel() {
 
   const slides = useMemo(() => {
     const withImages = products.filter((p) => p.image_url);
-    return shuffle(withImages).slice(0, MAX_SLIDES);
+    const representatives = buildGroups(withImages).map((g) => g.rep);
+    return shuffle(representatives).slice(0, MAX_SLIDES);
   }, [products]);
 
   if (loading || slides.length === 0) return null;
@@ -26,7 +28,7 @@ export default function HeroCarousel() {
   // Loopens hastighet skalas efter antal bilder, så det känns lika lugnt oavsett hur många produkter som finns
   const duration = Math.max(slides.length * 3, 20);
 
-  // Listan dubbleras så att loopen blir sömlös (när första kopian glidit ut har andra redan tagit vid)
+  // Listan dubbleras så att loopen blir sömlös
   const track = [...slides, ...slides];
 
   return (

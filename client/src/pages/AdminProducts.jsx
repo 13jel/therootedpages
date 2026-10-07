@@ -33,12 +33,14 @@ export default function AdminProducts() {
     const newProduct = await createProduct(token, product);
     setProducts((prev) => [...prev, newProduct]);
     setDuplicateSource(null);
-    setJustCreated(newProduct); // öppnar galleri-hanteraren för den nya produkten
+    setJustCreated(newProduct);
   }
 
   async function handleUpdate(id, updates) {
     const updated = await updateProduct(token, id, updates);
-    setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...updated } : p)),
+    );
     setEditingId(null);
   }
 
@@ -52,6 +54,8 @@ export default function AdminProducts() {
       image_url: product.image_url,
       category: product.category,
       theme: product.theme,
+      collection_id: product.collection_id,
+      color: "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -79,9 +83,9 @@ export default function AdminProducts() {
         <Link to="/admin/products" className="active">
           Produkter
         </Link>
-        <Link to="/admin/collections">Kollektioner</Link>
         <Link to="/admin/orders">Ordrar</Link>
         <Link to="/admin/gallery">Galleri</Link>
+        <Link to="/admin/collections">Kollektioner</Link>
       </nav>
 
       <h1>Admin – Produkter</h1>
@@ -118,9 +122,9 @@ export default function AdminProducts() {
             </h2>
             {duplicateSource && (
               <p className="duplicate-hint">
-                Fälten är förifyllda från originalet, inklusive bilden. Ändra
-                typ (t.ex. Tyg → Tapet), justera pris/lager, eller ladda upp en
-                ny bild vid behov.{" "}
+                Fälten är förifyllda från originalet, inklusive bilden och
+                kollektionen. Ange ny färg (och ändra typ vid behov), byt bild
+                och namn.{" "}
                 <button type="button" onClick={() => setDuplicateSource(null)}>
                   Avbryt duplicering
                 </button>
