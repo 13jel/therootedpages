@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 export default function Lightbox({ src, alt, title, description, onClose }) {
   const closeRef = useRef(null);
@@ -11,22 +11,22 @@ export default function Lightbox({ src, alt, title, description, onClose }) {
   useEffect(() => {
     const opener = document.activeElement;
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     closeRef.current?.focus();
 
     function handleKeyDown(e) {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onCloseRef.current();
-      } else if (e.key === 'Tab') {
+      } else if (e.key === "Tab") {
         // Dialogen har bara en knapp, så fokus ska aldrig lämna den
         e.preventDefault();
         closeRef.current?.focus();
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
       opener?.focus?.();
     };
@@ -39,7 +39,7 @@ export default function Lightbox({ src, alt, title, description, onClose }) {
       className="lightbox-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label={title || 'Förstorad bild'}
+      aria-label={title || "Förstorad bild"}
       onClick={() => onClose()}
     >
       <button
@@ -56,7 +56,10 @@ export default function Lightbox({ src, alt, title, description, onClose }) {
       </button>
 
       {title ? (
-        <div className="gallery-lightbox-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="gallery-lightbox-content"
+          onClick={(e) => e.stopPropagation()}
+        >
           {image}
           <div className="gallery-lightbox-info">
             <h3>{title}</h3>

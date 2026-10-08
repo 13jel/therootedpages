@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { fetchGallery } from '../api/gallery';
-import { usePageTitle } from '../hooks/usePageTitle';
-import Lightbox from '../components/Lightbox';
+import { useEffect, useState } from "react";
+import { fetchGallery } from "../api/gallery";
+import { usePageTitle } from "../hooks/usePageTitle";
+import Lightbox from "../components/Lightbox";
 
-const CONTACT_EMAIL = 'juliaelindstrom@outlook.com';
+const CONTACT_EMAIL = "juliaelindstrom@outlook.com";
 
 export default function Gallery() {
-  usePageTitle('Galleri');
+  usePageTitle("Galleri");
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,14 +24,16 @@ export default function Gallery() {
     <div className="gallery-page">
       <h1>Logotypgalleri</h1>
       <p className="gallery-intro">
-        Ett urval av logotyper jag designat på beställning. Dessa är inte till försäljning som de
-        är, men jag tar gärna emot nya uppdrag.
+        Ett urval av logotyper jag designat på beställning. Dessa är inte till
+        försäljning som de är, men jag tar gärna emot nya uppdrag.
       </p>
 
       {loading && <p role="status">Laddar...</p>}
       {error && <p role="alert">Kunde inte hämta galleriet: {error}</p>}
 
-      {!loading && !error && items.length === 0 && <p>Inga exempel uppladdade än.</p>}
+      {!loading && !error && items.length === 0 && (
+        <p>Inga exempel uppladdade än.</p>
+      )}
 
       <div className="gallery-grid">
         {items.map((item) => (

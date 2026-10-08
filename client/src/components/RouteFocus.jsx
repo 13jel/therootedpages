@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 
 const PRODUCT_PAGE = /^\/products\/[^/]+$/;
 
@@ -15,7 +15,7 @@ export default function RouteFocus() {
     // Variantbyte på en produktsida: fokus ska stanna på knappen man tryckte på
     if (PRODUCT_PAGE.test(previous) && PRODUCT_PAGE.test(pathname)) return;
 
-    document.getElementById('main')?.focus({ preventScroll: true });
+    document.getElementById("main")?.focus({ preventScroll: true });
   }, [pathname]);
 
   return null;

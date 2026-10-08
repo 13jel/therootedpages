@@ -76,6 +76,17 @@ function sortProducts(list, key, collectionName) {
   }
 }
 
+// value är "all", "none" (utan kollektion) eller ett kollektions-id som text
+function matchesCollection(product, value) {
+  if (value === "all") return true;
+  if (value === "none") return !product.collection_id;
+  return String(product.collection_id) === value;
+}
+
+function pluralProducts(count) {
+  return `${count} ${count === 1 ? "produkt" : "produkter"}`;
+}
+
 export default function AdminProducts() {
   usePageTitle("Admin – Produkter");
 
@@ -89,6 +100,7 @@ export default function AdminProducts() {
   const [deletingId, setDeletingId] = useState(null);
   const [justCreated, setJustCreated] = useState(null);
   const [sortKey, setSortKey] = useState("name-asc");
+  const [collectionFilter, setCollectionFilter] = useState("all");
   const [announcement, setAnnouncement] = useState("");
   const [focusRequest, setFocusRequest] = useState(null);
 
@@ -133,7 +145,19 @@ export default function AdminProducts() {
     collections.map((c) => [c.id, c.name]),
   );
   const collectionName = (p) => collectionNames[p.collection_id] || null;
+  const countFor = (value) =>
+    products.filter((p) => matchesCollection(p, value)).length;
+
   const sortedProducts = sortProducts(products, sortKey, collectionName);
+  const visibleProducts = sortedProducts.filter((p) =>
+    matchesCollection(p, collectionFilter),
+  );
+
+  // Nya produkter hamnar i den kollektion man filtrerar på
+  const defaultCollectionId =
+    collectionFilter !== "all" && collectionFilter !== "none"
+      ? collectionFilter
+      : "";
 
   async function handleCreate(product) {
     const newProduct = await createProduct(token, product);
@@ -149,8 +173,15 @@ export default function AdminProducts() {
       prev.map((p) => (p.id === id ? { ...p, ...updated } : p)),
     );
     setEditingId(null);
-    setAnnouncement(`Ändringarna i ${updates.name} sparades`);
-    requestFocus("edit-button", id);
+
+    // Om kollektionen ändrades kan produkten ha försvunnit ur den filtrerade listan
+    const stillVisible = matchesCollection(updated, collectionFilter);
+    setAnnouncement(
+      stillVisible
+        ? `Ändringarna i ${updates.name} sparades`
+        : `Ändringarna i ${updates.name} sparades. Produkten hör nu till en annan kollektion och visas inte i den här listan`,
+    );
+    requestFocus(stillVisible ? "edit-button" : "list", id);
   }
 
   function handleDuplicate(product) {
@@ -254,6 +285,7 @@ export default function AdminProducts() {
             <ProductForm
               key={duplicateSource ? duplicateSource.name : "new"}
               initialProduct={duplicateSource}
+              defaultCollectionId={defaultCollectionId}
               mode="create"
               onSubmit={handleCreate}
             />
@@ -273,26 +305,60 @@ export default function AdminProducts() {
         )}
 
         {products.length > 1 && (
-          <label className="theme-select admin-sort">
-            Sortera
-            <select
-              value={sortKey}
-              onChange={(e) => {
-                setSortKey(e.target.value);
-                setAnnouncement(`Sorterar efter ${SORT_LABELS[e.target.value]}`);
-              }}
-            >
-              {Object.entries(SORT_LABELS).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="filter-bar-right">
+            <label className="theme-select admin-sort">
+              Sortera
+              <select
+                value={sortKey}
+                onChange={(e) => {
+                  setSortKey(e.target.value);
+                  setAnnouncement(
+                    `Sorterar efter ${SORT_LABELS[e.target.value]}`,
+                  );
+                }}
+              >
+                {Object.entries(SORT_LABELS).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {collections.length > 0 && (
+              <label className="theme-select admin-sort">
+                Visa kollektion
+                <select
+                  value={collectionFilter}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCollectionFilter(value);
+                    setAnnouncement(`${pluralProducts(countFor(value))} visas`);
+                  }}
+                >
+                  <option value="all">
+                    Alla kollektioner ({products.length})
+                  </option>
+                  <option value="none">
+                    Utan kollektion ({countFor("none")})
+                  </option>
+                  {collections.map((c) => (
+                    <option key={c.id} value={String(c.id)}>
+                      {c.name} ({countFor(String(c.id))})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+        )}
+
+        {!loading && products.length > 0 && visibleProducts.length === 0 && (
+          <p>Inga produkter i den här kollektionen än.</p>
         )}
 
         <ul className="admin-product-list">
-          {sortedProducts.map((product) => {
+          {visibleProducts.map((product) => {
             const meta = [
               product.category,
               product.color,

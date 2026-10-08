@@ -1,28 +1,32 @@
-import { useEffect, useRef, useState } from 'react';
-import { supabase } from '../api/supabaseClient';
-import { uploadProductImage } from '../utils/image';
-import { fetchCollections } from '../api/collections';
+import { useEffect, useRef, useState } from "react";
+import { supabase } from "../api/supabaseClient";
+import { uploadProductImage } from "../utils/image";
+import { fetchCollections } from "../api/collections";
 
 const emptyProduct = {
-  name: '',
-  description: '',
-  price: '',
-  stock: '',
-  image_url: '',
-  category: '',
-  color: '',
-  theme: '',
-  collection_id: '',
+  name: "",
+  description: "",
+  price: "",
+  stock: "",
+  image_url: "",
+  category: "",
+  color: "",
+  theme: "",
+  collection_id: "",
 };
 
 export default function ProductForm({
   initialProduct,
-  mode = 'create',
+  mode = "create",
   onSubmit,
   onCancel,
   focusOnMount = false,
+  defaultCollectionId = "",
 }) {
-  const [form, setForm] = useState(initialProduct || emptyProduct);
+  const [form, setForm] = useState(
+    () =>
+      initialProduct || { ...emptyProduct, collection_id: defaultCollectionId },
+  );
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(initialProduct?.image_url || null);
   const [saving, setSaving] = useState(false);
@@ -31,15 +35,23 @@ export default function ProductForm({
   const [collections, setCollections] = useState([]);
   const nameRef = useRef(null);
 
-  const isEditing = mode === 'edit';
+  const isEditing = mode === "edit";
 
   useEffect(() => {
-    fetchCollections().then(setCollections).catch(() => {});
+    fetchCollections()
+      .then(setCollections)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (focusOnMount) nameRef.current?.focus();
   }, [focusOnMount]);
+
+  // Följer kollektionsfiltret i admin utan att nollställa resten av formuläret
+  useEffect(() => {
+    if (isEditing || initialProduct) return;
+    setForm((prev) => ({ ...prev, collection_id: defaultCollectionId }));
+  }, [defaultCollectionId, isEditing, initialProduct]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -76,7 +88,7 @@ export default function ProductForm({
       });
 
       if (!isEditing) {
-        setForm(emptyProduct);
+        setForm({ ...emptyProduct, collection_id: defaultCollectionId });
         setFile(null);
         setPreview(null);
       }
@@ -103,7 +115,11 @@ export default function ProductForm({
 
       <label>
         Beskrivning
-        <textarea name="description" value={form.description} onChange={handleChange} />
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+        />
       </label>
 
       <label>
@@ -140,13 +156,25 @@ export default function ProductForm({
         <img
           src={preview}
           alt="Förhandsvisning av vald omslagsbild"
-          style={{ width: 120, height: 150, objectFit: 'contain', border: '2.5px solid var(--color-ink)', borderRadius: 8, background: 'var(--color-paper)' }}
+          style={{
+            width: 120,
+            height: 150,
+            objectFit: "contain",
+            border: "2.5px solid var(--color-ink)",
+            borderRadius: 8,
+            background: "var(--color-paper)",
+          }}
         />
       )}
 
       <label>
         Typ
-        <select name="category" value={form.category} onChange={handleChange} required>
+        <select
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          required
+        >
           <option value="">Välj typ</option>
           <option value="Posters">Posters</option>
           <option value="Tyg">Tyg</option>
@@ -158,7 +186,7 @@ export default function ProductForm({
         Färg (valfritt)
         <input
           name="color"
-          value={form.color || ''}
+          value={form.color || ""}
           onChange={handleChange}
           placeholder="t.ex. Grön, Blå, Senap"
         />
@@ -168,7 +196,7 @@ export default function ProductForm({
         Tema
         <input
           name="theme"
-          value={form.theme || ''}
+          value={form.theme || ""}
           onChange={handleChange}
           placeholder="t.ex. Djur, Musik, Botanik"
         />
@@ -178,22 +206,24 @@ export default function ProductForm({
         Kollektion / mönstergrupp (valfritt)
         <select
           name="collection_id"
-          value={form.collection_id || ''}
+          value={form.collection_id || ""}
           onChange={handleChange}
-          aria-describedby={form.collection_id ? 'collection-hint' : undefined}
+          aria-describedby={form.collection_id ? "collection-hint" : undefined}
         >
           <option value="">Ingen kollektion</option>
           {collections.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
         </select>
       </label>
 
       {form.collection_id && (
         <p id="collection-hint" className="form-hint">
-          Produkter i samma kollektion visas som ett kort i butiken, där kunden väljer typ och
-          färg. Namnet visas i varukorg och på ordrar, så döp gärna varianten till t.ex.
-          "Mönstret – Färg – Typ".
+          Produkter i samma kollektion visas som ett kort i butiken, där kunden
+          väljer typ och färg. Namnet visas i varukorg och på ordrar, så döp
+          gärna varianten till t.ex. "Mönstret – Färg – Typ".
         </p>
       )}
 
@@ -205,7 +235,13 @@ export default function ProductForm({
 
       <div className="form-actions">
         <button type="submit" aria-disabled={saving}>
-          {uploading ? 'Laddar upp bild...' : saving ? 'Sparar...' : isEditing ? 'Spara ändringar' : 'Lägg till produkt'}
+          {uploading
+            ? "Laddar upp bild..."
+            : saving
+              ? "Sparar..."
+              : isEditing
+                ? "Spara ändringar"
+                : "Lägg till produkt"}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} aria-disabled={saving}>

@@ -52,7 +52,11 @@ export default function Register() {
 
     if (signUpError) {
       if (signUpError.message.includes("already registered")) {
-        fail("Det finns redan ett konto med den e-postadressen.", "email", emailRef);
+        fail(
+          "Det finns redan ett konto med den e-postadressen.",
+          "email",
+          emailRef,
+        );
       } else {
         fail("Något gick fel: " + signUpError.message, null, null);
       }
@@ -69,7 +73,10 @@ export default function Register() {
   }
 
   function fieldProps(field, extraDescribedBy) {
-    const describedBy = [extraDescribedBy, errorField === field && "register-error"]
+    const describedBy = [
+      extraDescribedBy,
+      errorField === field && "register-error",
+    ]
       .filter(Boolean)
       .join(" ");
     return {

@@ -168,8 +168,7 @@ export default function Account() {
                 <ul className="order-items-list">
                   {order.order_items.map((item) => (
                     <li key={item.id}>
-                      {item.products?.name}{" "}
-                      <span aria-hidden="true">×</span>
+                      {item.products?.name} <span aria-hidden="true">×</span>
                       <span className="sr-only">, antal </span>
                       {item.quantity}
                     </li>

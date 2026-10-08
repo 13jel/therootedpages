@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import useProducts from '../hooks/useProducts';
-import { buildGroups } from '../utils/variants';
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import useProducts from "../hooks/useProducts";
+import { buildGroups } from "../utils/variants";
 
 const MAX_SLIDES = 12;
 
@@ -35,12 +35,15 @@ export default function HeroCarousel() {
         className="hero-marquee-toggle"
         onClick={() => setPaused((p) => !p)}
       >
-        {paused ? 'Starta rörelse' : 'Pausa rörelse'}
+        {paused ? "Starta rörelse" : "Pausa rörelse"}
       </button>
 
       <div
-        className={`hero-marquee-track${paused ? ' is-paused' : ''}`}
-        style={{ '--marquee-duration': `${duration}s`, '--marquee-count': slides.length }}
+        className={`hero-marquee-track${paused ? " is-paused" : ""}`}
+        style={{
+          "--marquee-duration": `${duration}s`,
+          "--marquee-count": slides.length,
+        }}
       >
         {/* Listan dubbleras för en sömlös loop; kopia 2 är dold för hjälpmedel */}
         {[0, 1].map((copy) =>
@@ -49,12 +52,15 @@ export default function HeroCarousel() {
               to={`/products/${group.rep.id}`}
               className="hero-marquee-slide"
               key={`${copy}-${group.key}`}
-              aria-hidden={copy === 1 ? 'true' : undefined}
+              aria-hidden={copy === 1 ? "true" : undefined}
               tabIndex={copy === 1 ? -1 : undefined}
             >
-              <img src={group.rep.image_url} alt={copy === 0 ? group.name : ''} />
+              <img
+                src={group.rep.image_url}
+                alt={copy === 0 ? group.name : ""}
+              />
             </Link>
-          ))
+          )),
         )}
       </div>
     </section>

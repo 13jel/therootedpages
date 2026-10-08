@@ -132,7 +132,9 @@ export default function Cart() {
           <h1 ref={headingRef} tabIndex={-1}>
             Tack för din beställning!
           </h1>
-          <p>Order #{orderDone.id} har lagts. Du hittar den under Mina sidor.</p>
+          <p>
+            Order #{orderDone.id} har lagts. Du hittar den under Mina sidor.
+          </p>
         </>
       ) : items.length === 0 ? (
         <>
@@ -197,7 +199,10 @@ export default function Cart() {
                 <span>{formatPrice(item.quantity * item.product.price)}</span>
                 <button type="button" onClick={() => handleRemove(item)}>
                   Ta bort
-                  <span className="sr-only"> {item.product.name} ur varukorgen</span>
+                  <span className="sr-only">
+                    {" "}
+                    {item.product.name} ur varukorgen
+                  </span>
                 </button>
               </li>
             ))}
@@ -248,7 +253,10 @@ export default function Cart() {
               </button>
             </form>
           ) : (
-            <section className="confirm-dialog" aria-labelledby="confirm-heading">
+            <section
+              className="confirm-dialog"
+              aria-labelledby="confirm-heading"
+            >
               <h2 id="confirm-heading" ref={confirmHeadingRef} tabIndex={-1}>
                 Bekräfta köp
               </h2>
