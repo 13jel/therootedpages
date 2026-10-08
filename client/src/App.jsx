@@ -3,6 +3,7 @@ import { CurrencyProvider } from "./context/CurrencyContext";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import AppRoutes from "./routes/AppRoutes";
+import RouteFocus from './components/RouteFocus';
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -13,8 +14,10 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <div className="app-shell">
+              <a href="#main" className="skip-link">Hoppa till innehåll</a>
               <Navbar />
-              <main className="app-main">
+              <RouteFocus />
+              <main className="app-main" id="main" tabIndex={-1}>
                 <AppRoutes />
               </main>
               <Footer />

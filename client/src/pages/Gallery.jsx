@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { fetchGallery } from '../api/gallery';
+import { usePageTitle } from '../hooks/usePageTitle';
+import Lightbox from '../components/Lightbox';
 
 const CONTACT_EMAIL = 'juliaelindstrom@outlook.com';
 
 export default function Gallery() {
+  usePageTitle('Galleri');
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,10 +28,10 @@ export default function Gallery() {
         är, men jag tar gärna emot nya uppdrag.
       </p>
 
-      {loading && <p>Laddar...</p>}
-      {error && <p>Kunde inte hämta galleriet: {error}</p>}
+      {loading && <p role="status">Laddar...</p>}
+      {error && <p role="alert">Kunde inte hämta galleriet: {error}</p>}
 
-      {!loading && items.length === 0 && <p>Inga exempel uppladdade än.</p>}
+      {!loading && !error && items.length === 0 && <p>Inga exempel uppladdade än.</p>}
 
       <div className="gallery-grid">
         {items.map((item) => (
@@ -35,10 +39,11 @@ export default function Gallery() {
             key={item.id}
             type="button"
             className="gallery-item"
+            aria-haspopup="dialog"
             onClick={() => setActiveItem(item)}
           >
-            <img src={item.image_url} alt={item.title} />
-            <h3>{item.title}</h3>
+            <img src={item.image_url} alt="" loading="lazy" />
+            <span className="gallery-item-title">{item.title}</span>
           </button>
         ))}
       </div>
@@ -55,23 +60,13 @@ export default function Gallery() {
       </section>
 
       {activeItem && (
-        <div className="lightbox-overlay" onClick={() => setActiveItem(null)}>
-          <button
-            type="button"
-            className="lightbox-close"
-            onClick={() => setActiveItem(null)}
-            aria-label="Stäng"
-          >
-            ×
-          </button>
-          <div className="gallery-lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <img src={activeItem.image_url} alt={activeItem.title} className="lightbox-image" />
-            <div className="gallery-lightbox-info">
-              <h3>{activeItem.title}</h3>
-              {activeItem.description && <p>{activeItem.description}</p>}
-            </div>
-          </div>
-        </div>
+        <Lightbox
+          src={activeItem.image_url}
+          alt=""
+          title={activeItem.title}
+          description={activeItem.description}
+          onClose={() => setActiveItem(null)}
+        />
       )}
     </div>
   );

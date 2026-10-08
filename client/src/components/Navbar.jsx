@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import CurrencySelect from "./CurrencySelect";
@@ -23,13 +23,23 @@ export default function Navbar() {
     );
   }
 
+  const cartSummary = itemCount === 1 ? "1 vara" : `${itemCount} varor`;
+
   return (
-    <nav className="navbar">
-      <Link to="/" className="navbar-brand">
+    <nav className="navbar" aria-label="Huvudmeny">
+      <Link
+        to="/"
+        className="navbar-brand"
+        aria-label="TRP, The Rooted Pages startsida"
+      >
         TRP
       </Link>
 
-      <form onSubmit={handleQuickSearch} className="navbar-search">
+      <form
+        onSubmit={handleQuickSearch}
+        className="navbar-search"
+        role="search"
+      >
         <input
           type="search"
           placeholder="Sök..."
@@ -45,6 +55,8 @@ export default function Navbar() {
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
+            aria-hidden="true"
+            focusable="false"
           >
             <circle cx="11" cy="11" r="7" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -53,23 +65,32 @@ export default function Navbar() {
       </form>
 
       <div className="navbar-links">
-        <Link to="/products">Produkter</Link>
-        <Link to="/gallery">Galleri</Link>
+        <NavLink to="/products">Produkter</NavLink>
+        <NavLink to="/gallery">Galleri</NavLink>
 
-        <Link to="/cart">
+        <NavLink to="/cart">
           Varukorg
-          {itemCount > 0 && <span className="cart-count">{itemCount}</span>}
-        </Link>
+          {itemCount > 0 && (
+            <>
+              <span className="cart-count" aria-hidden="true">
+                {itemCount}
+              </span>
+              <span className="sr-only"> ({cartSummary})</span>
+            </>
+          )}
+        </NavLink>
 
-        {session && <Link to="/account">Mina sidor</Link>}
-        {isAdmin && <Link to="/admin/products">Admin</Link>}
+        {session && <NavLink to="/account">Mina sidor</NavLink>}
+        {isAdmin && <NavLink to="/admin/products">Admin</NavLink>}
 
         <CurrencySelect />
 
         {session ? (
-          <button onClick={handleSignOut}>Logga ut</button>
+          <button type="button" onClick={handleSignOut}>
+            Logga ut
+          </button>
         ) : (
-          <Link to="/login">Logga in</Link>
+          <NavLink to="/login">Logga in</NavLink>
         )}
       </div>
     </nav>

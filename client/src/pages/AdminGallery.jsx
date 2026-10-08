@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { supabase } from "../api/supabaseClient";
 import { uploadProductImage } from "../utils/image";
 import {
@@ -9,8 +9,11 @@ import {
   updateGalleryItem,
   deleteGalleryItem,
 } from "../api/gallery";
+import AdminNav from "../components/AdminNav";
 
 export default function AdminGallery() {
+  usePageTitle("Admin – Galleri");
+
   const { token } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,13 +23,35 @@ export default function AdminGallery() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
   const [saving, setSaving] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
+  const [announcement, setAnnouncement] = useState("");
+  const [focusRequest, setFocusRequest] = useState(null);
+
+  const fileInputRef = useRef(null);
+  const listHeadingRef = useRef(null);
+  const editButtons = useRef({});
 
   useEffect(() => {
     loadItems();
   }, []);
+
+  // Fokus på rätt ställe när knappen man tryckte på har försvunnit
+  useEffect(() => {
+    if (!focusRequest) return;
+    const { target, id } = focusRequest;
+    const element = {
+      list: listHeadingRef.current,
+      "edit-button": editButtons.current[id],
+    }[target];
+    element?.focus();
+  }, [focusRequest]);
+
+  function requestFocus(target, id) {
+    setFocusRequest({ target, id });
+  }
 
   function loadItems() {
     setLoading(true);
@@ -45,8 +70,10 @@ export default function AdminGallery() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (saving) return;
     if (!file) {
       setError("Välj en bild först");
+      fileInputRef.current?.focus();
       return;
     }
     setSaving(true);
@@ -58,6 +85,8 @@ export default function AdminGallery() {
       setDescription("");
       setFile(null);
       setPreview(null);
+      setFileInputKey((k) => k + 1);
+      setAnnouncement("Exemplet lades till i galleriet");
       loadItems();
     } catch (err) {
       setError(err.message);
@@ -66,11 +95,13 @@ export default function AdminGallery() {
     }
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm("Ta bort detta galleriexempel?")) return;
+  async function handleDelete(item) {
+    if (!window.confirm(`Ta bort "${item.title}" från galleriet?`)) return;
     try {
-      await deleteGalleryItem(token, id);
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      await deleteGalleryItem(token, item.id);
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
+      setAnnouncement(`${item.title} togs bort`);
+      requestFocus("list");
     } catch (err) {
       setError(err.message);
     }
@@ -78,16 +109,13 @@ export default function AdminGallery() {
 
   return (
     <div className="admin-products">
-      <nav className="admin-subnav">
-        <Link to="/admin/products">Produkter</Link>
-        <Link to="/admin/collections">Kollektioner</Link>
-        <Link to="/admin/orders">Ordrar</Link>
-        <Link to="/admin/gallery" className="active">
-          Galleri
-        </Link>
-      </nav>
+      <AdminNav />
 
       <h1>Admin – Galleri</h1>
+
+      <p className="sr-only" role="status">
+        {announcement}
+      </p>
 
       <section>
         <h2>Lägg till exempel</h2>
@@ -112,6 +140,8 @@ export default function AdminGallery() {
           <label>
             Bild
             <input
+              key={fileInputKey}
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleFileChange}
@@ -122,7 +152,7 @@ export default function AdminGallery() {
           {preview && (
             <img
               src={preview}
-              alt="Förhandsvisning"
+              alt="Förhandsvisning av vald bild"
               style={{
                 width: 120,
                 height: 120,
@@ -134,17 +164,23 @@ export default function AdminGallery() {
             />
           )}
 
-          {error && <p className="form-error">{error}</p>}
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
 
-          <button type="submit" disabled={saving}>
+          <button type="submit" aria-disabled={saving}>
             {saving ? "Sparar..." : "Lägg till"}
           </button>
         </form>
       </section>
 
       <section>
-        <h2>Befintliga exempel</h2>
-        {loading && <p>Laddar...</p>}
+        <h2 ref={listHeadingRef} tabIndex={-1}>
+          Befintliga exempel
+        </h2>
+        {loading && <p role="status">Laddar...</p>}
         <div className="gallery-grid">
           {items.map((item) =>
             editingId === item.id ? (
@@ -157,27 +193,41 @@ export default function AdminGallery() {
                     prev.map((i) => (i.id === updated.id ? updated : i)),
                   );
                   setEditingId(null);
+                  setAnnouncement(`${updated.title} sparades`);
+                  requestFocus("edit-button", updated.id);
                 }}
-                onCancel={() => setEditingId(null)}
+                onCancel={() => {
+                  setEditingId(null);
+                  requestFocus("edit-button", item.id);
+                }}
               />
             ) : (
               <div key={item.id} className="gallery-item admin-gallery-item">
-                <img src={item.image_url} alt={item.title} />
-                <h3>{item.title}</h3>
+                <img src={item.image_url} alt="" loading="lazy" />
+                <h3 className="gallery-item-title">{item.title}</h3>
                 {item.description && (
                   <p className="admin-gallery-description">
                     {item.description}
                   </p>
                 )}
                 <div className="admin-gallery-actions">
-                  <button type="button" onClick={() => setEditingId(item.id)}>
+                  <button
+                    type="button"
+                    ref={(el) => {
+                      editButtons.current[item.id] = el;
+                    }}
+                    onClick={() => setEditingId(item.id)}
+                  >
                     Redigera
+                    <span className="sr-only"> {item.title}</span>
                   </button>
                   <button
-                    onClick={() => handleDelete(item.id)}
+                    type="button"
+                    onClick={() => handleDelete(item)}
                     className="danger-button"
                   >
                     Ta bort
+                    <span className="sr-only"> {item.title}</span>
                   </button>
                 </div>
               </div>
@@ -196,6 +246,11 @@ function GalleryEditForm({ item, token, onSaved, onCancel }) {
   const [preview, setPreview] = useState(item.image_url);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const titleRef = useRef(null);
+
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, []);
 
   function handleFileChange(e) {
     const selected = e.target.files?.[0];
@@ -206,6 +261,7 @@ function GalleryEditForm({ item, token, onSaved, onCancel }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     setError(null);
     try {
@@ -231,6 +287,7 @@ function GalleryEditForm({ item, token, onSaved, onCancel }) {
       <label>
         Titel
         <input
+          ref={titleRef}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -253,7 +310,7 @@ function GalleryEditForm({ item, token, onSaved, onCancel }) {
       {preview && (
         <img
           src={preview}
-          alt="Förhandsvisning"
+          alt="Förhandsvisning av bilden"
           style={{
             width: 120,
             height: 120,
@@ -265,13 +322,17 @@ function GalleryEditForm({ item, token, onSaved, onCancel }) {
         />
       )}
 
-      {error && <p className="form-error">{error}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
 
       <div className="form-actions">
-        <button type="submit" disabled={saving}>
+        <button type="submit" aria-disabled={saving}>
           {saving ? "Sparar..." : "Spara ändringar"}
         </button>
-        <button type="button" onClick={onCancel} disabled={saving}>
+        <button type="button" onClick={onCancel} aria-disabled={saving}>
           Avbryt
         </button>
       </div>

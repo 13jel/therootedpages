@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
-import useProducts from "../hooks/useProducts";
-import { buildGroups } from "../utils/variants";
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import useProducts from '../hooks/useProducts';
+import { buildGroups } from '../utils/variants';
 
 const MAX_SLIDES = 12;
 
@@ -16,11 +16,11 @@ function shuffle(array) {
 
 export default function HeroCarousel() {
   const { products, loading } = useProducts();
+  const [paused, setPaused] = useState(false);
 
   const slides = useMemo(() => {
     const withImages = products.filter((p) => p.image_url);
-    const representatives = buildGroups(withImages).map((g) => g.rep);
-    return shuffle(representatives).slice(0, MAX_SLIDES);
+    return shuffle(buildGroups(withImages)).slice(0, MAX_SLIDES);
   }, [products]);
 
   if (loading || slides.length === 0) return null;
@@ -28,28 +28,35 @@ export default function HeroCarousel() {
   // Loopens hastighet skalas efter antal bilder, så det känns lika lugnt oavsett hur många produkter som finns
   const duration = Math.max(slides.length * 3, 20);
 
-  // Listan dubbleras så att loopen blir sömlös
-  const track = [...slides, ...slides];
-
   return (
-    <div className="hero-marquee">
-      <div
-        className="hero-marquee-track"
-        style={{
-          "--marquee-duration": `${duration}s`,
-          "--marquee-count": slides.length,
-        }}
+    <section className="hero-marquee" aria-label="Utvalda produkter">
+      <button
+        type="button"
+        className="hero-marquee-toggle"
+        onClick={() => setPaused((p) => !p)}
       >
-        {track.map((product, i) => (
-          <Link
-            to={`/products/${product.id}`}
-            className="hero-marquee-slide"
-            key={`${product.id}-${i}`}
-          >
-            <img src={product.image_url} alt={product.name} />
-          </Link>
-        ))}
+        {paused ? 'Starta rörelse' : 'Pausa rörelse'}
+      </button>
+
+      <div
+        className={`hero-marquee-track${paused ? ' is-paused' : ''}`}
+        style={{ '--marquee-duration': `${duration}s`, '--marquee-count': slides.length }}
+      >
+        {/* Listan dubbleras för en sömlös loop; kopia 2 är dold för hjälpmedel */}
+        {[0, 1].map((copy) =>
+          slides.map((group) => (
+            <Link
+              to={`/products/${group.rep.id}`}
+              className="hero-marquee-slide"
+              key={`${copy}-${group.key}`}
+              aria-hidden={copy === 1 ? 'true' : undefined}
+              tabIndex={copy === 1 ? -1 : undefined}
+            >
+              <img src={group.rep.image_url} alt={copy === 0 ? group.name : ''} />
+            </Link>
+          ))
+        )}
       </div>
-    </div>
+    </section>
   );
 }

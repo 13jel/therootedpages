@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const SPOONFLOWER_URL = 'https://www.spoonflower.com/profiles/therootedpages/collections?filter=designed';
 
 export default function About() {
+  usePageTitle('Om projektet');
+
   return (
     <div className="about-page">
       <h1>Om The Rooted Pages</h1>
@@ -38,6 +41,7 @@ export default function About() {
           Mina mönster finns också på riktigt tyg och tapet i min butik på{' '}
           <a href={SPOONFLOWER_URL} target="_blank" rel="noopener noreferrer">
             Spoonflower
+            <span className="sr-only"> (öppnas i ny flik)</span>
           </a>
           .
         </p>

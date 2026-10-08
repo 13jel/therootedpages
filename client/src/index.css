@@ -1,4 +1,18 @@
 /* =============================================================
+   THE ROOTED PAGES
+
+    1. Design tokens          10. Cart
+    2. Base / reset           11. Account / Mina sidor
+    3. Buttons                12. Admin
+    4. Forms                  13. Gallery
+    5. Navbar                 14. Footer
+    6. Home / hero            15. About
+    7. Product list           16. Currency
+    8. Product card           17. Variants
+    9. Product detail         18. Accessibility utilities
+   ============================================================= */
+
+/* =============================================================
    1. DESIGN TOKENS
    ============================================================= */
 :root {
@@ -35,16 +49,6 @@ body,
   height: 100%;
 }
 
-.app-shell {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.app-main {
-  flex: 1;
-}
-
 body {
   margin: 0;
   font-family: var(--font-body);
@@ -64,6 +68,16 @@ body {
   line-height: 1.5;
 }
 
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+}
+
 h1,
 h2,
 h3 {
@@ -76,8 +90,19 @@ a {
   color: var(--color-currant);
 }
 
+/* Fokusmarkering för tangentbordsanvändare (gäller allt) */
+:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+/* Programmatiskt fokus på <main> och rubriker vid sidbyte ska inte få ram */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
 /* =============================================================
-   3. BUTTONS (global defaults)
+   3. BUTTONS
    ============================================================= */
 button {
   font-family: var(--font-body);
@@ -95,18 +120,20 @@ button {
     background 0.12s ease;
 }
 
-button:hover:not(:disabled) {
+button:hover:not(:disabled, [aria-disabled="true"]) {
   background: var(--color-gold);
   transform: translate(-1px, -1px);
   box-shadow: 4px 4px 0 var(--color-ink);
 }
 
-button:active:not(:disabled) {
+button:active:not(:disabled, [aria-disabled="true"]) {
   transform: translate(1px, 1px);
   box-shadow: 2px 2px 0 var(--color-ink);
 }
 
-button:disabled {
+/* aria-disabled används där fokus inte får tappas medan något sparas */
+button:disabled,
+button[aria-disabled="true"] {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
@@ -117,18 +144,23 @@ button:disabled {
   color: var(--color-error);
 }
 
-.danger-button:hover:not(:disabled) {
+.danger-button:hover:not(:disabled, [aria-disabled="true"]) {
   background: var(--color-error);
   color: var(--color-paper-light);
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 3px solid var(--color-gold);
-  outline-offset: 2px;
+/* Växlingsknappar i aktivt läge (filter, visningsläge, variantval) */
+.filter-group button.active,
+.view-toggle button.active,
+.variant-options button.active {
+  background: var(--color-moss);
+  color: var(--color-paper-light);
+}
+
+.filter-group button.active:hover:not(:disabled, [aria-disabled="true"]),
+.view-toggle button.active:hover:not(:disabled, [aria-disabled="true"]),
+.variant-options button.active:hover:not(:disabled, [aria-disabled="true"]) {
+  background: var(--color-moss-dark);
 }
 
 /* =============================================================
@@ -159,6 +191,11 @@ form textarea {
   resize: vertical;
 }
 
+select[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .form-error {
   color: var(--color-error);
   font-weight: 600;
@@ -166,6 +203,12 @@ form textarea {
   border-left: 3px solid var(--color-error);
   padding: 0.5em 0.8em;
   border-radius: 4px;
+}
+
+.form-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-moss-dark);
 }
 
 .login-page {
@@ -191,6 +234,11 @@ form textarea {
   color: var(--color-paper-light);
   padding: 1rem 1.5rem;
   border-bottom: 4px solid var(--color-gold);
+}
+
+/* Mörk bakgrund: ljus fokusring */
+.navbar :focus-visible {
+  outline-color: var(--color-paper-light);
 }
 
 .navbar-brand {
@@ -273,6 +321,13 @@ form textarea {
   border-bottom-color: var(--color-gold);
 }
 
+/* Aktuell sida: understrykning, inte bara färg */
+.navbar-links a[aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
 .navbar-links button {
   background: transparent;
   color: var(--color-paper-light);
@@ -344,9 +399,12 @@ form textarea {
 
 /* ---- Hero marquee ---- */
 .hero-marquee {
+  position: relative;
   max-width: 900px;
   width: 100%;
   margin: 2.5rem auto 0;
+  /* Utrymme så fokusringen och hover-lyftet inte klipps av overflow */
+  padding: 8px 0;
   overflow: hidden;
   -webkit-mask-image: linear-gradient(
     90deg,
@@ -364,6 +422,19 @@ form textarea {
   );
 }
 
+/* Pausknappen ligger i mitten, där masken är helt genomskinlig för innehåll */
+.hero-marquee-toggle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1rem;
+  z-index: 2;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 0.3em 0.9em;
+  font-size: 0.85rem;
+}
+
 .hero-marquee-track {
   display: flex;
   gap: 1.5rem;
@@ -371,7 +442,9 @@ form textarea {
   animation: hero-marquee-scroll var(--marquee-duration, 30s) linear infinite;
 }
 
-.hero-marquee:hover .hero-marquee-track {
+.hero-marquee:hover .hero-marquee-track,
+.hero-marquee-track:focus-within,
+.hero-marquee-track.is-paused {
   animation-play-state: paused;
 }
 
@@ -419,9 +492,21 @@ form textarea {
   }
 }
 
+/* "Minska rörelse": ingen animation, bilderna går att scrolla i sidled */
 @media (prefers-reduced-motion: reduce) {
+  .hero-marquee {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
   .hero-marquee-track {
     animation: none;
+  }
+
+  .hero-marquee-slide[aria-hidden="true"],
+  .hero-marquee-toggle {
+    display: none;
   }
 }
 
@@ -448,8 +533,8 @@ form textarea {
 }
 
 .product-search::placeholder {
-  color: var(--color-moss-dark);
-  opacity: 0.7;
+  color: var(--color-moss);
+  opacity: 1;
 }
 
 .filter-bar {
@@ -482,11 +567,6 @@ form textarea {
   font-size: 0.9rem;
 }
 
-.filter-group button.active {
-  background: var(--color-moss);
-  color: var(--color-paper-light);
-}
-
 .theme-select {
   display: flex;
   align-items: center;
@@ -514,11 +594,6 @@ form textarea {
   line-height: 1;
 }
 
-.view-toggle button.active {
-  background: var(--color-moss);
-  color: var(--color-paper-light);
-}
-
 /* =============================================================
    8. PRODUCT CARD (grid view + list view)
    ============================================================= */
@@ -530,6 +605,7 @@ form textarea {
 }
 
 .product-card {
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -539,6 +615,7 @@ form textarea {
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-hard);
   padding: 1rem;
+  cursor: pointer;
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
@@ -549,10 +626,26 @@ form textarea {
   box-shadow: 8px 8px 0 var(--color-ink);
 }
 
-a.product-card {
-  text-decoration: none;
+/* Kortet visar fokus när rubriklänken eller knappen har det */
+.product-card:has(:focus-visible) {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+/* Rubriklänken sträcks över hela kortet, så hela kortet är klickbart */
+.product-card h3 a {
   color: inherit;
-  cursor: pointer;
+  text-decoration: none;
+}
+
+.product-card h3 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.product-card h3 a:focus-visible {
+  outline: none;
 }
 
 .product-card img {
@@ -601,9 +694,17 @@ a.product-card {
   font-weight: 500;
 }
 
+/* Knappen ligger ovanför den sträckta länken */
 .product-card button {
+  position: relative;
+  z-index: 1;
   width: 100%;
   margin-top: auto;
+}
+
+/* Rent visuell knapp på gruppkort: klicket går igenom till länken */
+.product-card button[aria-hidden="true"] {
+  pointer-events: none;
 }
 
 /* ---- List view ---- */
@@ -738,8 +839,8 @@ a.product-card {
 
 .product-detail-thumbs button.active {
   opacity: 1;
-  border-color: var(--color-gold);
   border-width: 3px;
+  box-shadow: var(--shadow-hard-sm);
 }
 
 .product-detail-thumbs img {
@@ -783,7 +884,7 @@ a.product-card {
   border-radius: 6px;
 }
 
-/* ---- Lightbox ---- */
+/* ---- Lightbox (produktsidan och galleriet) ---- */
 .lightbox-overlay {
   position: fixed;
   inset: 0;
@@ -977,7 +1078,7 @@ a.product-card {
 }
 
 /* =============================================================
-   12. ADMIN — shared
+   12. ADMIN
    ============================================================= */
 .admin-products,
 .admin-orders {
@@ -988,6 +1089,7 @@ a.product-card {
 
 .admin-subnav {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1.5rem;
   border-bottom: 2px solid var(--color-ink);
@@ -999,12 +1101,14 @@ a.product-card {
   color: var(--color-ink);
   font-weight: 600;
   padding: 0.3em 0.8em;
+  border: 2px solid transparent;
   border-radius: 6px;
 }
 
-.admin-subnav a.active {
+.admin-subnav a.active,
+.admin-subnav a[aria-current="page"] {
   background: var(--color-gold);
-  border: 2px solid var(--color-ink);
+  border-color: var(--color-ink);
 }
 
 /* ---- Admin: products ---- */
@@ -1018,6 +1122,10 @@ a.product-card {
   padding: 1.5rem;
   margin-bottom: 2rem;
   box-shadow: var(--shadow-hard-sm);
+}
+
+.admin-sort {
+  margin-bottom: 1rem;
 }
 
 .duplicate-hint {
@@ -1082,7 +1190,7 @@ a.product-card {
   color: var(--color-paper-light);
 }
 
-.finish-button:hover:not(:disabled) {
+.finish-button:hover:not(:disabled, [aria-disabled="true"]) {
   background: var(--color-gold);
   color: var(--color-ink);
 }
@@ -1113,6 +1221,13 @@ a.product-card {
   padding: 0.75rem 1rem;
   font-family: var(--font-mono);
   font-size: 0.95rem;
+}
+
+.admin-product-meta {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-currant);
 }
 
 /* ---- Admin: product image gallery ---- */
@@ -1151,13 +1266,25 @@ a.product-card {
   font-size: 0.75rem;
 }
 
+/* Filfältet är visuellt dolt (sr-only) men nåbart; etiketten visar fokus */
 .gallery-add {
+  position: relative;
   display: inline-block;
   cursor: pointer;
   font-weight: 600;
   border: 2px dashed var(--color-ink);
   border-radius: 6px;
   padding: 0.5em 1em;
+}
+
+.gallery-add:has(input:focus-visible) {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+.gallery-add.is-busy {
+  opacity: 0.6;
+  cursor: progress;
 }
 
 /* ---- Admin: orders ---- */
@@ -1239,9 +1366,13 @@ a.product-card {
   margin-bottom: 0.6rem;
 }
 
-.gallery-item h3 {
+/* Samma utseende oavsett om titeln är en span (publikt) eller h3 (admin) */
+.gallery-item .gallery-item-title {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 1rem;
-  margin-bottom: 0.2em;
+  margin: 0 0 0.2em;
 }
 
 .admin-gallery-item {
@@ -1414,11 +1545,6 @@ a.product-card {
   font-size: 0.9rem;
 }
 
-.variant-options button.active {
-  background: var(--color-moss);
-  color: var(--color-paper-light);
-}
-
 .variant-options button.variant-swatch {
   display: flex;
   flex-direction: column;
@@ -1443,19 +1569,64 @@ a.product-card {
   word-break: break-word;
 }
 
-.form-hint {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--color-moss-dark);
+/* =============================================================
+   18. ACCESSIBILITY UTILITIES
+   ============================================================= */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.admin-sort {
-  margin-bottom: 1rem;
+.skip-link {
+  position: absolute;
+  top: -5rem;
+  left: 1rem;
+  z-index: 1000;
+  padding: 0.75rem 1rem;
+  background: var(--color-ink);
+  color: var(--color-paper-light);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
 }
 
-.admin-product-meta {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--color-currant);
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Lokal hoppa-förbi-länk (t.ex. förbi bildspelet på startsidan) */
+.skip-inline:focus {
+  position: static;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  margin: 0 0 1rem;
+  padding: 0.5rem 1rem;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background: var(--color-ink);
+  color: var(--color-paper-light);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+/* Respektera "minska rörelse" i operativsystemet */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

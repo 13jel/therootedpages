@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { fetchMyProfile, updateMyProfile } from "../api/account";
 import { apiFetch } from "../api/apiClient";
 
 export default function Account() {
+  usePageTitle("Mina sidor");
+
   const { user, token } = useAuth();
 
   const [form, setForm] = useState({
@@ -70,13 +73,14 @@ export default function Account() {
       <section className="account-section">
         <h2>Mina uppgifter</h2>
         {loadingProfile ? (
-          <p>Laddar...</p>
+          <p role="status">Laddar...</p>
         ) : (
           <form onSubmit={handleSubmit}>
             <label>
               Förnamn
               <input
                 name="first_name"
+                autoComplete="given-name"
                 value={form.first_name}
                 onChange={handleChange}
               />
@@ -86,6 +90,7 @@ export default function Account() {
               Efternamn
               <input
                 name="last_name"
+                autoComplete="family-name"
                 value={form.last_name}
                 onChange={handleChange}
               />
@@ -96,6 +101,7 @@ export default function Account() {
               <input
                 name="phone"
                 type="tel"
+                autoComplete="tel"
                 value={form.phone}
                 onChange={handleChange}
               />
@@ -105,17 +111,30 @@ export default function Account() {
               Standardadress
               <textarea
                 name="address"
+                autoComplete="street-address"
                 value={form.address}
                 onChange={handleChange}
               />
             </label>
 
-            {error && <p className="form-error">{error}</p>}
+            {error && (
+              <p className="form-error" role="alert">
+                {error}
+              </p>
+            )}
 
             <button type="submit" disabled={saving}>
               {saving ? "Sparar..." : "Spara uppgifter"}
             </button>
-            {saved && <p className="save-confirmation">Sparat!</p>}
+
+            <p className="sr-only" role="status">
+              {saved ? "Uppgifterna är sparade" : ""}
+            </p>
+            {saved && (
+              <p className="save-confirmation" aria-hidden="true">
+                Sparat!
+              </p>
+            )}
           </form>
         )}
       </section>
@@ -123,7 +142,7 @@ export default function Account() {
       <section className="account-section">
         <h2>Mina beställningar</h2>
         {loadingOrders ? (
-          <p>Laddar...</p>
+          <p role="status">Laddar...</p>
         ) : orders.length === 0 ? (
           <p>Du har inte lagt några beställningar än.</p>
         ) : (
@@ -133,17 +152,26 @@ export default function Account() {
                 <div className="my-order-header">
                   <span>Order #{order.id}</span>
                   <span className={`status-badge status-${order.status}`}>
+                    <span className="sr-only">Status: </span>
                     {order.status}
                   </span>
-                  <span>{order.total} slantar</span>
                   <span>
-                    {new Date(order.created_at).toLocaleDateString("sv-SE")}
+                    <span className="sr-only">Totalt: </span>
+                    {order.total} slantar
+                  </span>
+                  <span>
+                    <time dateTime={order.created_at}>
+                      {new Date(order.created_at).toLocaleDateString("sv-SE")}
+                    </time>
                   </span>
                 </div>
                 <ul className="order-items-list">
                   {order.order_items.map((item) => (
                     <li key={item.id}>
-                      {item.products?.name} × {item.quantity}
+                      {item.products?.name}{" "}
+                      <span aria-hidden="true">×</span>
+                      <span className="sr-only">, antal </span>
+                      {item.quantity}
                     </li>
                   ))}
                 </ul>

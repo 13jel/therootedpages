@@ -10,7 +10,7 @@ export default function Footer() {
         reserved.
       </p>
       <p className="footer-disclaimer">
-        Skolprojekt — <Link to="/about">läs mer</Link>
+        Skolprojekt — <Link to="/about">om projektet</Link>
       </p>
     </footer>
   );

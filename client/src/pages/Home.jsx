@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
+import { usePageTitle } from "../hooks/usePageTitle";
 import HeroCarousel from "../components/HeroCarousel";
 
 export default function Home() {
+  usePageTitle();
+
   return (
     <div className="home-page">
       <section className="hero">
@@ -16,8 +19,11 @@ export default function Home() {
           ditt företag. Kika in i <Link to="/gallery">galleriet</Link> för
           exempel och hör av dig!
         </p>
+        <a href="#hero-cta" className="sr-only skip-inline">
+          Hoppa förbi bildspelet
+        </a>
         <HeroCarousel />
-        <Link to="/products" className="cta-button">
+        <Link id="hero-cta" to="/products" className="cta-button">
           Se produkter
         </Link>
       </section>

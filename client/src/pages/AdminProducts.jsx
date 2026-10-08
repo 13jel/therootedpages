@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { usePageTitle } from "../hooks/usePageTitle";
 import {
   fetchAllProductsAdmin,
   createProduct,
@@ -9,6 +9,7 @@ import {
 } from "../api/adminProducts";
 import { fetchCollections } from "../api/collections";
 import { TYPE_ORDER } from "../utils/variants";
+import AdminNav from "../components/AdminNav";
 import ProductForm from "../components/ProductForm";
 import ProductGallery from "../components/ProductGallery";
 
@@ -76,6 +77,8 @@ function sortProducts(list, key, collectionName) {
 }
 
 export default function AdminProducts() {
+  usePageTitle("Admin – Produkter");
+
   const { token } = useAuth();
   const [products, setProducts] = useState([]);
   const [collections, setCollections] = useState([]);
@@ -86,6 +89,13 @@ export default function AdminProducts() {
   const [deletingId, setDeletingId] = useState(null);
   const [justCreated, setJustCreated] = useState(null);
   const [sortKey, setSortKey] = useState("name-asc");
+  const [announcement, setAnnouncement] = useState("");
+  const [focusRequest, setFocusRequest] = useState(null);
+
+  const formHeadingRef = useRef(null);
+  const createdRef = useRef(null);
+  const listHeadingRef = useRef(null);
+  const editButtons = useRef({});
 
   useEffect(() => {
     if (!token) return;
@@ -102,6 +112,23 @@ export default function AdminProducts() {
       .catch(() => {});
   }, []);
 
+  // Flyttar fokus till nästa logiska ställe när knappen man tryckte på har försvunnit
+  useEffect(() => {
+    if (!focusRequest) return;
+    const { target, id } = focusRequest;
+    const element = {
+      created: createdRef.current,
+      form: formHeadingRef.current,
+      list: listHeadingRef.current,
+      "edit-button": editButtons.current[id],
+    }[target];
+    element?.focus();
+  }, [focusRequest]);
+
+  function requestFocus(target, id) {
+    setFocusRequest({ target, id });
+  }
+
   const collectionNames = Object.fromEntries(
     collections.map((c) => [c.id, c.name]),
   );
@@ -113,6 +140,7 @@ export default function AdminProducts() {
     setProducts((prev) => [...prev, newProduct]);
     setDuplicateSource(null);
     setJustCreated(newProduct);
+    requestFocus("created");
   }
 
   async function handleUpdate(id, updates) {
@@ -121,6 +149,8 @@ export default function AdminProducts() {
       prev.map((p) => (p.id === id ? { ...p, ...updated } : p)),
     );
     setEditingId(null);
+    setAnnouncement(`Ändringarna i ${updates.name} sparades`);
+    requestFocus("edit-button", id);
   }
 
   function handleDuplicate(product) {
@@ -136,19 +166,23 @@ export default function AdminProducts() {
       collection_id: product.collection_id,
       color: "",
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    requestFocus("form");
   }
 
   async function handleDelete(product) {
+    if (deletingId) return;
     const confirmed = window.confirm(
       `Ta bort "${product.name}"? Produkten döljs från butiken men gamla ordrar påverkas inte.`,
     );
     if (!confirmed) return;
 
     setDeletingId(product.id);
+    setError(null);
     try {
       await deleteProduct(token, product.id);
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
+      setAnnouncement(`${product.name} togs bort`);
+      requestFocus("list");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -158,22 +192,21 @@ export default function AdminProducts() {
 
   return (
     <div className="admin-products">
-      <nav className="admin-subnav">
-        <Link to="/admin/products" className="active">
-          Produkter
-        </Link>
-        <Link to="/admin/orders">Ordrar</Link>
-        <Link to="/admin/gallery">Galleri</Link>
-        <Link to="/admin/collections">Kollektioner</Link>
-      </nav>
+      <AdminNav />
 
       <h1>Admin – Produkter</h1>
+
+      <p className="sr-only" role="status">
+        {announcement}
+      </p>
 
       <section>
         {justCreated ? (
           <div className="created-confirmation">
-            <div className="created-banner">
-              <span className="created-check">✓</span>
+            <div className="created-banner" ref={createdRef} tabIndex={-1}>
+              <span className="created-check" aria-hidden="true">
+                ✓
+              </span>
               <div>
                 <strong>{justCreated.name}</strong> sparad i butiken.
                 <p>
@@ -184,19 +217,22 @@ export default function AdminProducts() {
               </div>
             </div>
 
-            <ProductGallery productId={justCreated.id} />
+            <ProductGallery productId={justCreated.id} headingLevel={2} />
 
             <button
               type="button"
               className="finish-button"
-              onClick={() => setJustCreated(null)}
+              onClick={() => {
+                setJustCreated(null);
+                requestFocus("form");
+              }}
             >
               Klar med {justCreated.name} – lägg till nästa produkt
             </button>
           </div>
         ) : (
           <>
-            <h2>
+            <h2 ref={formHeadingRef} tabIndex={-1}>
               {duplicateSource ? "Duplicerar produkt" : "Lägg till ny produkt"}
             </h2>
             {duplicateSource && (
@@ -204,7 +240,13 @@ export default function AdminProducts() {
                 Fälten är förifyllda från originalet, inklusive bilden och
                 kollektionen. Ange ny färg (och ändra typ vid behov), byt bild
                 och namn.{" "}
-                <button type="button" onClick={() => setDuplicateSource(null)}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDuplicateSource(null);
+                    requestFocus("form");
+                  }}
+                >
                   Avbryt duplicering
                 </button>
               </p>
@@ -220,16 +262,25 @@ export default function AdminProducts() {
       </section>
 
       <section>
-        <h2>Befintliga produkter</h2>
-        {loading && <p>Laddar...</p>}
-        {error && <p className="form-error">{error}</p>}
+        <h2 ref={listHeadingRef} tabIndex={-1}>
+          Befintliga produkter
+        </h2>
+        {loading && <p role="status">Laddar...</p>}
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
 
         {products.length > 1 && (
           <label className="theme-select admin-sort">
             Sortera
             <select
               value={sortKey}
-              onChange={(e) => setSortKey(e.target.value)}
+              onChange={(e) => {
+                setSortKey(e.target.value);
+                setAnnouncement(`Sorterar efter ${SORT_LABELS[e.target.value]}`);
+              }}
             >
               {Object.entries(SORT_LABELS).map(([key, label]) => (
                 <option key={key} value={key}>
@@ -253,12 +304,20 @@ export default function AdminProducts() {
             return (
               <li key={product.id}>
                 {editingId === product.id ? (
-                  <div className="admin-edit-block">
+                  <div
+                    className="admin-edit-block"
+                    role="group"
+                    aria-label={`Redigerar ${product.name}`}
+                  >
                     <ProductForm
+                      focusOnMount
                       initialProduct={product}
                       mode="edit"
                       onSubmit={(updates) => handleUpdate(product.id, updates)}
-                      onCancel={() => setEditingId(null)}
+                      onCancel={() => {
+                        setEditingId(null);
+                        requestFocus("edit-button", product.id);
+                      }}
                     />
                     <ProductGallery productId={product.id} />
                   </div>
@@ -272,18 +331,31 @@ export default function AdminProducts() {
                     </span>
                     <span>{product.price} slantar</span>
                     <span>{product.stock} st</span>
-                    <button onClick={() => setEditingId(product.id)}>
+                    <button
+                      type="button"
+                      ref={(el) => {
+                        editButtons.current[product.id] = el;
+                      }}
+                      onClick={() => setEditingId(product.id)}
+                    >
                       Redigera
-                    </button>
-                    <button onClick={() => handleDuplicate(product)}>
-                      Duplicera
+                      <span className="sr-only"> {product.name}</span>
                     </button>
                     <button
+                      type="button"
+                      onClick={() => handleDuplicate(product)}
+                    >
+                      Duplicera
+                      <span className="sr-only"> {product.name}</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleDelete(product)}
-                      disabled={deletingId === product.id}
+                      aria-disabled={deletingId === product.id}
                       className="danger-button"
                     >
                       {deletingId === product.id ? "Tar bort..." : "Ta bort"}
+                      <span className="sr-only"> {product.name}</span>
                     </button>
                   </div>
                 )}
