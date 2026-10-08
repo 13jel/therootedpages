@@ -1448,3 +1448,14 @@ a.product-card {
   font-size: 0.85rem;
   color: var(--color-moss-dark);
 }
+
+.admin-sort {
+  margin-bottom: 1rem;
+}
+
+.admin-product-meta {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-currant);
+}

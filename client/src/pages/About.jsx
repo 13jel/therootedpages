@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+const SPOONFLOWER_URL = 'https://www.spoonflower.com/profiles/therootedpages/collections?filter=designed';
+
 export default function About() {
   return (
     <div className="about-page">
@@ -26,11 +28,18 @@ export default function About() {
       </section>
 
       <section className="about-section">
-        <h2>Galleriet är på riktigt</h2>
+        <h2>Galleriet och Spoonflower</h2>
         <p>
           Till skillnad från produkterna tar jag faktiskt emot riktiga förfrågningar via mejl
           från <Link to="/gallery">galleriet</Link> — om du vill beställa en logotyp eller
           liknande hör jag gärna av mig.
+        </p>
+        <p>
+          Mina mönster finns också på riktigt tyg och tapet i min butik på{' '}
+          <a href={SPOONFLOWER_URL} target="_blank" rel="noopener noreferrer">
+            Spoonflower
+          </a>
+          .
         </p>
       </section>
 
