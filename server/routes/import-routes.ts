@@ -1,13 +1,13 @@
 import { Router, Response } from "express";
-import { supabaseAdmin } from "./supabaseClient.js";
-import { requireAuth, requireAdmin } from "./middleware/auth.js";
-import { AuthRequest } from "./types.js";
+import { supabaseAdmin } from "../supabaseClient.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { AuthRequest } from "../types.js";
 import {
   fetchSupplierCatalog,
   SupplierError,
   type ImportFormat,
   type MappedProduct,
-} from "./integrations/supplierAdapter.js";
+} from "../integrations/supplierAdapter.js";
 
 const router = Router();
 

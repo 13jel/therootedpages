@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
-import { supabaseAdmin } from "./supabaseClient.js";
-import { requireAuth, requireAdmin } from "./middleware/auth.js";
-import { AuthRequest } from "./types.js";
+import { supabaseAdmin } from "../supabaseClient.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { AuthRequest } from "../types.js";
 
 const collectionRouter = Router();
 

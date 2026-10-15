@@ -1,7 +1,7 @@
 import { Router, Response } from "express";
-import { supabaseForUser } from "./supabaseClient.js";
-import { requireAuth } from "./middleware/auth.js";
-import { AuthRequest } from "./types.js";
+import { supabaseForUser } from "../supabaseClient.js";
+import { requireAuth } from "../middleware/auth.js";
+import { AuthRequest } from "../types.js";
 
 const cartRouter = Router();
 
