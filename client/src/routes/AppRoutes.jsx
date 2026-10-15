@@ -14,6 +14,7 @@ import Gallery from "../pages/Gallery";
 import AdminGallery from "../pages/AdminGallery";
 import AdminCollections from "../pages/AdminCollections";
 import About from "../pages/About";
+import AdminImport from "../pages/AdminImport";
 
 export default function AppRoutes() {
   return (
@@ -66,6 +67,14 @@ export default function AppRoutes() {
         element={
           <AdminRoute>
             <AdminCollections />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/import"
+        element={
+          <AdminRoute>
+            <AdminImport />
           </AdminRoute>
         }
       />

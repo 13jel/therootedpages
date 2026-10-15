@@ -7,6 +7,7 @@ import orderRouter from "./order-routes.js";
 import galleryRouter from "./gallery-routes.js";
 import collectionRouter from "./collection-routes.js";
 import currencyRouter from "./currency-routes.js";
+import importRoutes from "./import-routes.js";
 
 const app = express();
 app.use(express.json());
@@ -18,6 +19,6 @@ app.use("/api/orders", orderRouter);
 app.use("/api/gallery", galleryRouter);
 app.use("/api/collections", collectionRouter);
 app.use("/api/currency", currencyRouter);
-
+app.use("/api/admin/import", importRoutes);
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on ${port}`));

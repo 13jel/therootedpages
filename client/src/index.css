@@ -1630,3 +1630,40 @@ select[aria-disabled="true"] {
     scroll-behavior: auto !important;
   }
 }
+
+/* Admin – import */
+.import-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.import-report {
+  margin-top: 16px;
+}
+.import-report:focus {
+  outline: 3px solid var(--color-moss-dark);
+  outline-offset: 4px;
+}
+.import-summary {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.import-skipped {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+.import-skipped caption {
+  text-align: left;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.import-skipped th,
+.import-skipped td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1.5px solid var(--color-ink);
+}

@@ -6,6 +6,7 @@ export default function AdminNav() {
       <NavLink to="/admin/products">Produkter</NavLink>
       <NavLink to="/admin/orders">Ordrar</NavLink>
       <NavLink to="/admin/gallery">Galleri</NavLink>
+      <NavLink to="/admin/import">Import</NavLink>
       <NavLink to="/admin/collections">Kollektioner</NavLink>
     </nav>
   );
