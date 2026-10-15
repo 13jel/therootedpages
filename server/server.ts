@@ -1,18 +1,18 @@
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
-import productsRouter from "./product-routes.js";
-import cartRouter from "./cart-routes.js";
-import orderRouter from "./order-routes.js";
-import galleryRouter from "./gallery-routes.js";
-import collectionRouter from "./collection-routes.js";
-import currencyRouter from "./currency-routes.js";
-import importRoutes from "./import-routes.js";
+import productsRouter from "./routes/product-routes.js";
+import cartRouter from "./routes/cart-routes.js";
+import orderRouter from "./routes/order-routes.js";
+import galleryRouter from "./routes/gallery-routes.js";
+import collectionRouter from "./routes/collection-routes.js";
+import currencyRouter from "./routes/currency-routes.js";
+import importRoutes from "./routes/import-routes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 app.use(express.json());
 app.use(cors());
-
 app.use("/api/products", productsRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/orders", orderRouter);
@@ -20,5 +20,7 @@ app.use("/api/gallery", galleryRouter);
 app.use("/api/collections", collectionRouter);
 app.use("/api/currency", currencyRouter);
 app.use("/api/admin/import", importRoutes);
+app.use(errorHandler);
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on ${port}`));
