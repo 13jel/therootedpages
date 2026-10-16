@@ -1445,17 +1445,16 @@ select[aria-disabled="true"] {
   padding: 2rem 1.5rem;
   margin-top: 1rem;
   font-size: 0.85rem;
-  color: var(--color-moss-dark);
+  color: var(--color-ink);
 }
 
 .footer-disclaimer {
   margin-top: 0.4rem;
   font-size: 0.75rem;
-  opacity: 0.8;
 }
 
 .footer-disclaimer a {
-  color: var(--color-moss-dark);
+  color: var(--color-ink);
 }
 
 /* =============================================================
