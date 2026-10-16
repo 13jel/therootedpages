@@ -80,6 +80,8 @@ export default function Navbar() {
           )}
         </NavLink>
 
+        <NavLink to="/search">Sök</NavLink>
+
         {session && <NavLink to="/account">Mina sidor</NavLink>}
         {isAdmin && <NavLink to="/admin/products">Admin</NavLink>}
 
