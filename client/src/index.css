@@ -1601,7 +1601,6 @@ select[aria-disabled="true"] {
   top: 1rem;
 }
 
-/* Lokal hoppa-förbi-länk (t.ex. förbi bildspelet på startsidan) */
 .skip-inline:focus {
   position: static;
   display: inline-block;
@@ -1666,4 +1665,59 @@ select[aria-disabled="true"] {
   text-align: left;
   padding: 6px 8px;
   border-bottom: 1.5px solid var(--color-ink);
+}
+
+/* Sök */
+.search-form {
+  display: grid;
+  gap: 6px;
+  max-width: 480px;
+  margin-bottom: 16px;
+}
+.search-results:focus {
+  outline: 3px solid var(--color-moss-dark);
+  outline-offset: 4px;
+}
+.search-status {
+  min-height: 1.5em;
+}
+.search-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.search-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  border: 2.5px solid var(--color-ink);
+  border-radius: 8px;
+  background: var(--color-paper-light);
+}
+.search-item img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.search-item h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.search-meta {
+  margin: 2px 0;
+  opacity: 0.8;
+}
+.search-pagination {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+.search-pagination button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

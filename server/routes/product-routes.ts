@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { supabaseAdmin } from "../supabaseClient.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { AuthRequest } from "../types.js";
+import { syncRows, removeRows } from "../searchSync.js";
 
 const productsRouter = Router();
 
@@ -63,7 +64,9 @@ productsRouter.post(
       .select()
       .single();
     if (error) return res.status(500).json({ error: error.message });
-    res.status(201).json(data);
+
+    const searchIndexStale = !(await syncRows([data]));
+    res.status(201).json({ ...data, searchIndexStale });
   },
 );
 
@@ -100,7 +103,9 @@ productsRouter.put(
       .select()
       .single();
     if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+
+    const searchIndexStale = !(await syncRows([data]));
+    res.json({ ...data, searchIndexStale });
   },
 );
 
@@ -109,12 +114,16 @@ productsRouter.delete(
   requireAuth,
   requireAdmin,
   async (req: AuthRequest, res: Response) => {
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("products")
       .update({ is_active: false })
-      .eq("id", req.params.id);
+      .eq("id", req.params.id)
+      .select("id, sku")
+      .single();
     if (error) return res.status(500).json({ error: error.message });
-    res.status(204).send();
+
+    const searchIndexStale = !(await removeRows([data]));
+    res.status(200).json({ searchIndexStale });
   },
 );
 

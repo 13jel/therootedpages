@@ -8,6 +8,8 @@ import galleryRouter from "./routes/gallery-routes.js";
 import collectionRouter from "./routes/collection-routes.js";
 import currencyRouter from "./routes/currency-routes.js";
 import importRoutes from "./routes/import-routes.js";
+import searchRoutes from "./routes/search-routes.js";
+import adminSearchRoutes from "./routes/admin-search-routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -20,6 +22,8 @@ app.use("/api/gallery", galleryRouter);
 app.use("/api/collections", collectionRouter);
 app.use("/api/currency", currencyRouter);
 app.use("/api/admin/import", importRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/admin/search", adminSearchRoutes);
 app.use(errorHandler);
 
 const port = process.env.PORT || 3000;

@@ -8,6 +8,7 @@ import {
   type ImportFormat,
   type MappedProduct,
 } from "../integrations/supplierAdapter.js";
+import { syncRows } from "../searchSync.js";
 
 const router = Router();
 
@@ -74,7 +75,20 @@ router.post(
         if (writeError) throw new Error(writeError.message);
       }
 
+      let searchIndexStale = false;
+      if (toWrite.length > 0) {
+        const { data: saved } = await supabaseAdmin
+          .from("products")
+          .select("*")
+          .in(
+            "sku",
+            toWrite.map((p) => p.sku),
+          );
+        searchIndexStale = !(await syncRows(saved ?? []));
+      }
+
       return res.json({
+        searchIndexStale,
         format,
         bransch,
         total,
@@ -88,10 +102,12 @@ router.post(
         return res.status(err.status).json({ error: err.message });
       }
       console.error("Importfel:", err);
-      return res.status(500).json({
-        error:
-          "Importen misslyckades. Inget har ändrats i onödan, försök igen.",
-      });
+      return res
+        .status(500)
+        .json({
+          error:
+            "Importen misslyckades. Inget har ändrats i onödan, försök igen.",
+        });
     }
   },
 );

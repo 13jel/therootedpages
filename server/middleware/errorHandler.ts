@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import { CurrencyServiceError } from "../integrations/currencyAdapter.js";
 import { SupplierError } from "../integrations/supplierAdapter.js";
+import { SearchServiceError } from "../integrations/searchAdapter.js";
 
 export function errorHandler(
   err: unknown,
@@ -17,7 +18,11 @@ export function errorHandler(
       details: err.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
     });
   }
-  if (err instanceof CurrencyServiceError || err instanceof SupplierError) {
+  if (
+    err instanceof CurrencyServiceError ||
+    err instanceof SupplierError ||
+    err instanceof SearchServiceError
+  ) {
     console.warn(`${err.name}: ${err.message}`);
     return res.status(err.status).json({ error: err.message });
   }

@@ -1,14 +1,15 @@
 import { useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { runImport } from "../api/adminImport";
+import { runImport, reindexSearch } from "../api/adminImport";
 import AdminNav from "../components/AdminNav";
 import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function AdminImport() {
   usePageTitle("Admin – Import");
   const { token } = useAuth();
-  const [running, setRunning] = useState(null);
+  const [running, setRunning] = useState(null); // 'csv' | 'xml' | 'reindex' | null
   const [report, setReport] = useState(null);
+  const [reindexed, setReindexed] = useState(null);
   const [error, setError] = useState(null);
   const reportRef = useRef(null);
 
@@ -17,9 +18,26 @@ export default function AdminImport() {
     setRunning(format);
     setError(null);
     setReport(null);
+    setReindexed(null);
     try {
-      const result = await runImport(token, format);
-      setReport(result);
+      setReport(await runImport(token, format));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRunning(null);
+      setTimeout(() => reportRef.current?.focus(), 0);
+    }
+  }
+
+  async function handleReindex() {
+    if (running) return;
+    setRunning("reindex");
+    setError(null);
+    setReport(null);
+    setReindexed(null);
+    try {
+      const result = await reindexSearch(token);
+      setReindexed(result.indexed);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -53,6 +71,13 @@ export default function AdminImport() {
         >
           {running === "xml" ? "Importerar..." : "Importera XML"}
         </button>
+        <button
+          type="button"
+          aria-disabled={running !== null}
+          onClick={handleReindex}
+        >
+          {running === "reindex" ? "Synkar..." : "Synka sökindex"}
+        </button>
       </div>
 
       <div
@@ -61,12 +86,15 @@ export default function AdminImport() {
         className="import-report"
         aria-live="polite"
       >
-        {running && (
-          <p role="status">Hämtar och importerar från leverantören…</p>
-        )}
+        {running && <p role="status">Arbetar…</p>}
         {error && (
           <p className="form-error" role="alert">
             {error}
+          </p>
+        )}
+        {reindexed !== null && (
+          <p role="status">
+            Sökindexet är uppdaterat: {reindexed} produkter skickades.
           </p>
         )}
         {report && (
@@ -74,6 +102,12 @@ export default function AdminImport() {
             <h2>
               Rapport ({report.format.toUpperCase()}, {report.bransch})
             </h2>
+            {report.searchIndexStale && (
+              <p className="form-error" role="alert">
+                Produkterna är sparade, men sökindexet är inte uppdaterat. Tryck
+                på "Synka sökindex" när sökningen fungerar igen.
+              </p>
+            )}
             <ul className="import-summary">
               <li>
                 Rader i filen: <strong>{report.total}</strong>
