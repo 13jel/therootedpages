@@ -56,6 +56,7 @@ export default function ProductDetail() {
   usePageTitle(title);
 
   async function handleAddToCart() {
+    if (status === "loading" || loading || product.stock === 0) return;
     setStatus("loading");
     try {
       await addItem(product, 1);
@@ -228,7 +229,7 @@ export default function ProductDetail() {
         <button
           type="button"
           onClick={handleAddToCart}
-          disabled={product.stock === 0 || status === "loading" || loading}
+          aria-disabled={product.stock === 0 || status === "loading" || loading}
         >
           {status === "loading" && "Lägger till..."}
           {status === "done" && "Tillagd!"}

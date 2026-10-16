@@ -1,6 +1,9 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { searchProducts } from "../integrations/searchAdapter.js";
+import {
+  searchProducts,
+  getCategories,
+} from "../integrations/searchAdapter.js";
 
 const router = Router();
 
@@ -34,6 +37,17 @@ const SearchQuery = z.object({
     })
     .default("relevance"),
 });
+
+router.get(
+  "/categories",
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      res.json({ data: await getCategories() });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {

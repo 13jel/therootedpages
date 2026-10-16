@@ -39,7 +39,11 @@ export default function ProductCard({ group }) {
       ? `Från ${formatPrice(group.minPrice)}`
       : formatPrice(group.minPrice);
 
+  const outOfStock = product.stock === 0;
+  const buttonDisabled = outOfStock || status === "loading";
+
   async function handleAddToCart() {
+    if (buttonDisabled) return;
     setStatus("loading");
     try {
       await addItem(product, 1);
@@ -72,18 +76,25 @@ export default function ProductCard({ group }) {
           <button
             type="button"
             onClick={handleAddToCart}
-            disabled={product.stock === 0 || status === "loading"}
+            aria-disabled={buttonDisabled}
           >
             {status === "loading" && "Lägger till..."}
             {status === "done" && "Tillagd!"}
             {status === "idle" && "Lägg i varukorg"}
             {status === "error" && "Något gick fel"}
-            <span className="sr-only"> {product.name}</span>
+            <span className="sr-only">
+              {" "}
+              {product.name}
+              {outOfStock ? " (slut i lager)" : ""}
+            </span>
           </button>
         )}
 
         <p className="sr-only" role="status">
           {status === "done" ? `${product.name} lades i varukorgen` : ""}
+          {status === "error"
+            ? `Något gick fel när ${product.name} skulle läggas i varukorgen`
+            : ""}
         </p>
       </div>
     </article>

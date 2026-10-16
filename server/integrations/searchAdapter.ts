@@ -125,7 +125,7 @@ export async function configureIndex(): Promise<void> {
           "description",
           "sku",
         ],
-        attributesForFaceting: ["filterOnly(category)", "filterOnly(inStock)"],
+        attributesForFaceting: ["category", "filterOnly(inStock)"],
         replicas: [`${index}_price_asc`, `${index}_price_desc`],
       },
     });
@@ -162,6 +162,20 @@ export async function clearAndIndex(records: SearchRecord[]): Promise<void> {
     throw friendly(err);
   }
   await indexProducts(records);
+}
+
+export async function getCategories(): Promise<string[]> {
+  try {
+    const res = await searchClient().searchSingleIndex({
+      indexName: env().index,
+      searchParams: { query: "", hitsPerPage: 0, facets: ["category"] },
+    });
+    return Object.keys(res.facets?.category ?? {}).sort((a, b) =>
+      a.localeCompare(b, "sv"),
+    );
+  } catch (err) {
+    throw friendly(err);
+  }
 }
 
 export async function searchProducts(p: SearchParams): Promise<SearchResult> {

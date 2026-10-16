@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { searchProducts } from "../api/search";
+import { searchProducts, fetchSearchCategories } from "../api/search";
 import { useCurrency } from "../context/CurrencyContext";
 import { usePageTitle } from "../hooks/usePageTitle";
 
 const PAGE_SIZE = 12;
+
+const SORT_OPTIONS = {
+  relevance: "Bäst träff",
+  price_asc: "Pris (lägst först)",
+  price_desc: "Pris (högst först)",
+};
 
 export default function Search() {
   usePageTitle("Sök");
@@ -13,21 +19,44 @@ export default function Search() {
 
   const urlQuery = params.get("q") || "";
   const page = Math.max(1, Number(params.get("page")) || 1);
+  const category = params.get("category") || "";
+  const inStock = params.get("inStock") === "true";
+  const sortParam = params.get("sort") || "relevance";
+  const sort = sortParam in SORT_OPTIONS ? sortParam : "relevance";
 
   const [text, setText] = useState(urlQuery);
+  const [categories, setCategories] = useState([]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const resultsRef = useRef(null);
 
-  // Vänta 350 ms efter sista tangenttryckningen innan URL:en (och sökningen) uppdateras
+  function updateParams(changes, { replace = false } = {}) {
+    const next = new URLSearchParams(params);
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === "" || value === null || value === false) next.delete(key);
+      else next.set(key, String(value));
+    }
+    if (!("page" in changes)) next.delete("page");
+    setParams(next, { replace });
+  }
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchSearchCategories(controller.signal)
+      .then(setCategories)
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
   useEffect(() => {
     if (text === urlQuery) return;
-    const t = setTimeout(() => {
-      setParams(text ? { q: text } : {}, { replace: true });
-    }, 350);
+    const t = setTimeout(
+      () => updateParams({ q: text }, { replace: true }),
+      350,
+    );
     return () => clearTimeout(t);
-  }, [text, urlQuery, setParams]);
+  }, [text, urlQuery]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -37,6 +66,9 @@ export default function Search() {
       q: urlQuery,
       page,
       pageSize: PAGE_SIZE,
+      category,
+      inStock,
+      sort,
       signal: controller.signal,
     })
       .then(setResult)
@@ -49,17 +81,22 @@ export default function Search() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [urlQuery, page]);
+  }, [urlQuery, page, category, inStock, sort]);
 
   function goToPage(next) {
-    const p = new URLSearchParams(params);
-    p.set("page", String(next));
-    setParams(p);
-    // flytta fokus till resultaten så tangentbords- och skärmläsaranvändare hamnar rätt
+    updateParams({ page: next });
     setTimeout(() => resultsRef.current?.focus(), 0);
   }
 
+  function clearFilters() {
+    setText("");
+    setParams({});
+  }
+
   const meta = result?.meta;
+  const hasFilters = Boolean(
+    urlQuery || category || inStock || sort !== "relevance",
+  );
 
   return (
     <div className="search-page">
@@ -79,6 +116,58 @@ export default function Search() {
           maxLength={100}
           autoComplete="off"
         />
+
+        <div className="search-filters">
+          {categories.length > 0 && (
+            <label>
+              Kategori
+              <select
+                value={category}
+                onChange={(e) => updateParams({ category: e.target.value })}
+              >
+                <option value="">Alla kategorier</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          <label>
+            Sortera
+            <select
+              value={sort}
+              onChange={(e) =>
+                updateParams({
+                  sort: e.target.value === "relevance" ? "" : e.target.value,
+                })
+              }
+            >
+              {Object.entries(SORT_OPTIONS).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="search-checkbox">
+            <input
+              type="checkbox"
+              checked={inStock}
+              onChange={(e) => updateParams({ inStock: e.target.checked })}
+            />
+            Bara varor i lager
+          </label>
+
+          {hasFilters && (
+            <button type="button" onClick={clearFilters}>
+              Rensa sökning och filter
+            </button>
+          )}
+        </div>
       </form>
 
       <div ref={resultsRef} tabIndex={-1} className="search-results">
