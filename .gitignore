@@ -3,3 +3,5 @@
 *.env
 node_modules
 /public/settings.json
+lh-summary.mjs
+lh-search.json
