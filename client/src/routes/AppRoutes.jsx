@@ -15,6 +15,7 @@ import AdminGallery from "../pages/AdminGallery";
 import AdminCollections from "../pages/AdminCollections";
 import About from "../pages/About";
 import AdminImport from "../pages/AdminImport";
+import OrderConfirmation from "../pages/OrderConfirmation";
 import Search from "../pages/Search";
 
 export default function AppRoutes() {
@@ -79,6 +80,7 @@ export default function AppRoutes() {
           </AdminRoute>
         }
       />
+      <Route path="/order/confirmation" element={<OrderConfirmation />} />
       <Route path="/search" element={<Search />} />
     </Routes>
   );

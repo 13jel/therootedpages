@@ -1,5 +1,6 @@
-import express from "express";
 import "dotenv/config";
+import stripeWebhook from "./routes/stripe-webhook.js";
+import express from "express";
 import cors from "cors";
 import productsRouter from "./routes/product-routes.js";
 import cartRouter from "./routes/cart-routes.js";
@@ -13,6 +14,7 @@ import adminSearchRoutes from "./routes/admin-search-routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
+app.use("/api/stripe/webhook", stripeWebhook);
 app.use(express.json());
 app.use(cors());
 app.use("/api/products", productsRouter);

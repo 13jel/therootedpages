@@ -4,15 +4,15 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { CURRENCY_LABELS } from "../utils/currency";
-import { createOrder } from "../api/orders";
+import { CURRENCY_LABELS, formatSek } from "../utils/currency";
+import { startCheckout } from "../api/orders";
 import { fetchMyProfile } from "../api/account";
 
 export default function Cart() {
   usePageTitle("Varukorg");
 
   const { user, token, session } = useAuth();
-  const { items, loading, setQuantity, removeItem, refresh } = useCart();
+  const { items, loading, setQuantity, removeItem } = useCart();
   const { currency, formatPrice } = useCurrency();
   const userId = user?.id;
 
@@ -20,7 +20,6 @@ export default function Cart() {
   const [shippingAddress, setShippingAddress] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [placing, setPlacing] = useState(false);
-  const [orderDone, setOrderDone] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
   const [announcement, setAnnouncement] = useState("");
   const [focusRequest, setFocusRequest] = useState(null);
@@ -99,23 +98,38 @@ export default function Cart() {
     requestFocus("confirm");
   }
 
+  // Skickar bara produkt-id och antal. Servern räknar priset, sparar ordern som
+  // obetald och ger tillbaka adressen till Stripes betalsida.
   async function handleConfirmPurchase() {
+    if (placing) return;
     setPlacing(true);
     setError(null);
     try {
-      const order = await createOrder(token, shippingAddress);
-      setOrderDone(order);
-      setConfirming(false);
-      requestFocus("heading");
-      refresh().catch(() => {});
+      const { url } = await startCheckout(token, {
+        items: items.map((i) => ({
+          productId: i.product.id,
+          quantity: i.quantity,
+        })),
+        shipping_address: shippingAddress,
+      });
+      window.location.assign(url); // placing förblir true tills sidan lämnas
     } catch (err) {
       setError(err.message);
       setConfirming(false);
-      requestFocus("pay");
-    } finally {
       setPlacing(false);
+      requestFocus("pay");
     }
   }
+
+  // Trycker kunden på "tillbaka" i webbläsaren från Stripe kan sidan återställas
+  // från cache med knappen låst, så vi låser upp den igen.
+  useEffect(() => {
+    function onPageShow(e) {
+      if (e.persisted) setPlacing(false);
+    }
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   const total = items.reduce((sum, i) => sum + i.quantity * i.product.price, 0);
 
@@ -127,16 +141,7 @@ export default function Cart() {
         {announcement}
       </p>
 
-      {orderDone ? (
-        <>
-          <h1 ref={headingRef} tabIndex={-1}>
-            Tack för din beställning!
-          </h1>
-          <p>
-            Order #{orderDone.id} har lagts. Du hittar den under Mina sidor.
-          </p>
-        </>
-      ) : items.length === 0 ? (
+      {items.length === 0 ? (
         <>
           <h1 ref={headingRef} tabIndex={-1}>
             Varukorg
@@ -209,10 +214,10 @@ export default function Cart() {
           </ul>
 
           <p className="cart-total">Totalt: {formatPrice(total)}</p>
-          {currency !== "SLANTAR" && (
+          {currency !== "SEK" && (
             <p className="currency-note">
               Priserna visas som en uppskattning i {CURRENCY_LABELS[currency]}.
-              Ordern registreras i slantar ({total} slantar).
+              Du betalar i svenska kronor ({formatSek(total)}).
             </p>
           )}
 
@@ -262,7 +267,8 @@ export default function Cart() {
               </h2>
               <p>
                 Du köper {items.length} {items.length === 1 ? "vara" : "varor"}{" "}
-                för <strong>{total} slantar</strong>.
+                för <strong>{formatSek(total)}</strong>. Du skickas vidare till
+                Stripe för att betala.
               </p>
               <p>Levereras till: {shippingAddress}</p>
 
@@ -270,17 +276,20 @@ export default function Cart() {
                 <button
                   type="button"
                   onClick={handleConfirmPurchase}
-                  disabled={placing}
+                  aria-disabled={placing}
                 >
-                  {placing ? "Bearbetar..." : "Bekräfta köp"}
+                  {placing
+                    ? "Skickar till betalning..."
+                    : "Bekräfta och betala"}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
+                    if (placing) return;
                     setConfirming(false);
                     requestFocus("pay");
                   }}
-                  disabled={placing}
+                  aria-disabled={placing}
                 >
                   Avbryt
                 </button>

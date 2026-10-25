@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { fetchMyProfile, updateMyProfile } from "../api/account";
 import { apiFetch } from "../api/apiClient";
+import { formatSek } from "../utils/currency";
 
 export default function Account() {
   usePageTitle("Mina sidor");
@@ -157,7 +158,7 @@ export default function Account() {
                   </span>
                   <span>
                     <span className="sr-only">Totalt: </span>
-                    {order.total} slantar
+                    {formatSek(order.total)}
                   </span>
                   <span>
                     <time dateTime={order.created_at}>
@@ -168,7 +169,8 @@ export default function Account() {
                 <ul className="order-items-list">
                   {order.order_items.map((item) => (
                     <li key={item.id}>
-                      {item.products?.name} <span aria-hidden="true">×</span>
+                      {item.products?.name}{" "}
+                      <span aria-hidden="true">×</span>
                       <span className="sr-only">, antal </span>
                       {item.quantity}
                     </li>

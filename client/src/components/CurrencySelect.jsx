@@ -32,7 +32,7 @@ export default function CurrencySelect() {
           <option
             key={code}
             value={code}
-            disabled={Boolean(ratesError) && code !== "SLANTAR"}
+            disabled={Boolean(ratesError) && code !== "SEK"}
           >
             {CURRENCY_LABELS[code]}
           </option>

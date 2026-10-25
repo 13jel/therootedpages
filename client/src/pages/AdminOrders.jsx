@@ -3,9 +3,11 @@ import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { fetchAllOrders, updateOrderStatus } from "../api/adminOrders";
+import { formatSek } from "../utils/currency";
 import AdminNav from "../components/AdminNav";
 
-const STATUSES = ["Beställd", "Behandlas", "Levererad", "Återbetald"];
+const ADMIN_STATUSES = ["Beställd", "Behandlas", "Levererad", "Återbetald"];
+const SERVER_ONLY_STATUSES = ["Obetald", "Avbruten"];
 
 export default function AdminOrders() {
   usePageTitle("Admin – Ordrar");
@@ -62,53 +64,72 @@ export default function AdminOrders() {
       {!loading && orders.length === 0 && <p>Inga ordrar än.</p>}
 
       <ul className="admin-order-list">
-        {orders.map((order) => (
-          <li key={order.id} className="admin-order-row">
-            <div className="order-header">
-              <span>Order #{order.id}</span>
-              <span>
-                <span className="sr-only">Kund: </span>
-                {order.profiles?.email}
-              </span>
-              <span>
-                <span className="sr-only">Totalt: </span>
-                {order.total} slantar
-              </span>
-              <span>
-                <span className="sr-only">Beställd: </span>
-                <time dateTime={order.created_at}>
-                  {new Date(order.created_at).toLocaleString("sv-SE")}
-                </time>
-              </span>
-            </div>
+        {orders.map((order) => {
+          const serverOnly = SERVER_ONLY_STATUSES.includes(order.status);
+          return (
+            <li key={order.id} className="admin-order-row">
+              <div className="order-header">
+                <span>Order #{order.id}</span>
+                <span>
+                  <span className="sr-only">Kund: </span>
+                  {order.profiles?.email}
+                </span>
+                <span>
+                  <span className="sr-only">Totalt: </span>
+                  {formatSek(order.total)}
+                </span>
+                <span>
+                  <span className="sr-only">Beställd: </span>
+                  <time dateTime={order.created_at}>
+                    {new Date(order.created_at).toLocaleString("sv-SE")}
+                  </time>
+                </span>
+              </div>
 
-            <ul className="order-items-list">
-              {order.order_items.map((item) => (
-                <li key={item.id}>
-                  {item.products?.name} <span aria-hidden="true">×</span>
-                  <span className="sr-only">, antal </span>
-                  {item.quantity} ({item.unit_price} slantar/st)
-                </li>
-              ))}
-            </ul>
-
-            <label>
-              Status:
-              <select
-                aria-label={`Status för order #${order.id}`}
-                value={order.status}
-                onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                aria-disabled={updatingId === order.id}
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
+              <ul className="order-items-list">
+                {order.order_items.map((item) => (
+                  <li key={item.id}>
+                    {item.products?.name} <span aria-hidden="true">×</span>
+                    <span className="sr-only">, antal </span>
+                    {item.quantity} ({formatSek(item.unit_price)}/st)
+                  </li>
                 ))}
-              </select>
-            </label>
-          </li>
-        ))}
+              </ul>
+
+              {serverOnly ? (
+                <p>
+                  Status:{" "}
+                  <span className={`status-badge status-${order.status}`}>
+                    {order.status}
+                  </span>{" "}
+                  <span className="order-note">
+                    {order.status === "Obetald"
+                      ? "(väntar på betalning, ändras automatiskt)"
+                      : "(betalningen genomfördes inte)"}
+                  </span>
+                </p>
+              ) : (
+                <label>
+                  Status:
+                  <select
+                    aria-label={`Status för order #${order.id}`}
+                    value={order.status}
+                    onChange={(e) =>
+                      handleStatusChange(order.id, e.target.value)
+                    }
+                    aria-disabled={updatingId === order.id}
+                  >
+                    {ADMIN_STATUSES.map((s) => (
+                      <option key={s} value={s} disabled={s === "Beställd"}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

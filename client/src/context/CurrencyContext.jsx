@@ -15,9 +15,9 @@ const STORAGE_KEY = "trp_currency";
 function readStoredCurrency() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return CURRENCIES.includes(stored) ? stored : "SLANTAR";
+    return CURRENCIES.includes(stored) ? stored : "SEK";
   } catch {
-    return "SLANTAR";
+    return "SEK";
   }
 }
 
@@ -43,8 +43,8 @@ export function CurrencyProvider({ children }) {
     };
   }, []);
 
-  // Går kurserna inte att hämta visas slantar, men valet sparas till nästa gång
-  const currency = ratesError ? "SLANTAR" : chosen;
+  // Går kurserna inte att hämta visas kronor, men valet sparas till nästa gång
+  const currency = ratesError ? "SEK" : chosen;
 
   const setCurrency = useCallback((next) => {
     if (!CURRENCIES.includes(next)) return;

@@ -1012,7 +1012,41 @@ select[aria-disabled="true"] {
 }
 
 /* =============================================================
-   11. ACCOUNT / MINA SIDOR
+   11. ORDER CONFIRMATION
+   ============================================================= */
+.order-confirmation {
+  max-width: 40rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.order-confirmation h1:focus {
+  outline: none;
+}
+
+.order-confirmation-items {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.order-confirmation-items li {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid currentColor;
+}
+
+.order-confirmation-price {
+  margin-left: auto;
+}
+
+.order-confirmation-total {
+  text-align: right;
+}
+
+/* =============================================================
+   12. ACCOUNT / MINA SIDOR
    ============================================================= */
 .account-page {
   max-width: 720px;
@@ -1060,25 +1094,40 @@ select[aria-disabled="true"] {
 }
 
 .status-badge {
-  font-size: 0.8rem;
-  padding: 0.15em 0.6em;
-  border-radius: 6px;
-  background: var(--color-moss);
-  color: var(--color-paper-light);
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
-.status-badge.status-Behandlas {
-  background: var(--color-gold);
-  color: var(--color-ink);
+.status-Obetald {
+  background: #fff3cd;
+  color: #4d3b00;
 }
-
-.status-badge.status-Återbetald {
-  background: var(--color-error);
-  color: var(--color-paper-light);
+.status-Avbruten {
+  background: #f8d7da;
+  color: #58151c;
+}
+.status-Beställd {
+  background: #d1e7dd;
+  color: #0a3622;
+}
+.status-Behandlas {
+  background: #cfe2ff;
+  color: #052c65;
+}
+.status-Levererad {
+  background: #e2e3e5;
+  color: #1f2124;
+}
+.status-Återbetald {
+  background: #e9d8fd;
+  color: #3b1a66;
 }
 
 /* =============================================================
-   12. ADMIN
+   13. ADMIN
    ============================================================= */
 .admin-products,
 .admin-orders {
@@ -1324,7 +1373,7 @@ select[aria-disabled="true"] {
 }
 
 /* =============================================================
-   13. GALLERY
+   14. GALLERY
    ============================================================= */
 .gallery-page {
   max-width: 1000px;
@@ -1438,7 +1487,7 @@ select[aria-disabled="true"] {
 }
 
 /* =============================================================
-   14. FOOTER
+   15. FOOTER
    ============================================================= */
 .site-footer {
   text-align: center;
@@ -1458,7 +1507,7 @@ select[aria-disabled="true"] {
 }
 
 /* =============================================================
-   15. ABOUT
+   16. ABOUT
    ============================================================= */
 .about-page {
   max-width: 700px;
@@ -1475,7 +1524,7 @@ select[aria-disabled="true"] {
 }
 
 /* =============================================================
-   16. CURRENCY
+   17. CURRENCY
    ============================================================= */
 .currency-select {
   padding: 0.35em 0.6em;
@@ -1501,7 +1550,7 @@ select[aria-disabled="true"] {
 }
 
 /* =============================================================
-   17. VARIANTS (mönstergrupper)
+   18. VARIANTS (mönstergrupper)
    ============================================================= */
 .variant-meta {
   margin: 0;
@@ -1569,7 +1618,7 @@ select[aria-disabled="true"] {
 }
 
 /* =============================================================
-   18. ACCESSIBILITY UTILITIES
+   19. ACCESSIBILITY UTILITIES
    ============================================================= */
 .sr-only {
   position: absolute;

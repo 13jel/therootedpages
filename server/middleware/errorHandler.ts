@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { CurrencyServiceError } from "../integrations/currencyAdapter.js";
 import { SupplierError } from "../integrations/supplierAdapter.js";
 import { SearchServiceError } from "../integrations/searchAdapter.js";
+import { PaymentError } from "../integrations/paymentAdapter.js";
 
 export function errorHandler(
   err: unknown,
@@ -21,7 +22,8 @@ export function errorHandler(
   if (
     err instanceof CurrencyServiceError ||
     err instanceof SupplierError ||
-    err instanceof SearchServiceError
+    err instanceof SearchServiceError ||
+    err instanceof PaymentError
   ) {
     console.warn(`${err.name}: ${err.message}`);
     return res.status(err.status).json({ error: err.message });
