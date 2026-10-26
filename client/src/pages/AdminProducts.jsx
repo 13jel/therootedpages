@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../hooks/usePageTitle";
 import {
@@ -7,6 +8,7 @@ import {
   updateProduct,
   deleteProduct,
 } from "../api/adminProducts";
+import { uploadProductCover } from "../api/productImage";
 import { fetchCollections } from "../api/collections";
 import { TYPE_ORDER } from "../utils/variants";
 import AdminNav from "../components/AdminNav";
@@ -53,7 +55,7 @@ function sortProducts(list, key, collectionName) {
       return sorted.sort((a, b) => {
         const ca = collectionName(a);
         const cb = collectionName(b);
-        if (!ca !== !cb) return ca ? -1 : 1; // produkter utan kollektion hamnar sist
+        if (!ca !== !cb) return ca ? -1 : 1;
         return (
           text(ca, cb) ||
           typeRank(a) - typeRank(b) ||
@@ -76,7 +78,6 @@ function sortProducts(list, key, collectionName) {
   }
 }
 
-// value är "all", "none" (utan kollektion) eller ett kollektions-id som text
 function matchesCollection(product, value) {
   if (value === "all") return true;
   if (value === "none") return !product.collection_id;
@@ -103,6 +104,7 @@ export default function AdminProducts() {
   const [collectionFilter, setCollectionFilter] = useState("all");
   const [announcement, setAnnouncement] = useState("");
   const [focusRequest, setFocusRequest] = useState(null);
+  const [searchStale, setSearchStale] = useState(false);
 
   const formHeadingRef = useRef(null);
   const createdRef = useRef(null);
@@ -124,7 +126,6 @@ export default function AdminProducts() {
       .catch(() => {});
   }, []);
 
-  // Flyttar fokus till nästa logiska ställe när knappen man tryckte på har försvunnit
   useEffect(() => {
     if (!focusRequest) return;
     const { target, id } = focusRequest;
@@ -153,28 +154,66 @@ export default function AdminProducts() {
     matchesCollection(p, collectionFilter),
   );
 
-  // Nya produkter hamnar i den kollektion man filtrerar på
   const defaultCollectionId =
     collectionFilter !== "all" && collectionFilter !== "none"
       ? collectionFilter
       : "";
 
-  async function handleCreate(product) {
-    const newProduct = await createProduct(token, product);
+  async function handleCreate(product, file) {
+    const { searchIndexStale, ...created } = await createProduct(
+      token,
+      product,
+    );
+    if (searchIndexStale) setSearchStale(true);
+
+    let newProduct = created;
+    if (file) {
+      try {
+        const { searchIndexStale: stale, ...withImage } =
+          await uploadProductCover(token, created.id, file);
+        if (stale) setSearchStale(true);
+        newProduct = withImage;
+      } catch (err) {
+        setError(
+          `Produkten "${created.name}" sparades, men bilden kunde inte laddas upp: ${err.message} Öppna produkten under Befintliga produkter och försök igen.`,
+        );
+      }
+    }
     setProducts((prev) => [...prev, newProduct]);
     setDuplicateSource(null);
     setJustCreated(newProduct);
     requestFocus("created");
   }
 
-  async function handleUpdate(id, updates) {
-    const updated = await updateProduct(token, id, updates);
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...updated } : p)),
+  async function handleUpdate(id, updates, file) {
+    const { searchIndexStale, ...saved } = await updateProduct(
+      token,
+      id,
+      updates,
     );
+    if (searchIndexStale) setSearchStale(true);
+    let updated = saved;
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...saved } : p)),
+    );
+
+    if (file) {
+      try {
+        const { searchIndexStale: stale, ...withImage } =
+          await uploadProductCover(token, id, file);
+        if (stale) setSearchStale(true);
+        updated = withImage;
+        setProducts((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, ...withImage } : p)),
+        );
+      } catch (err) {
+        throw new Error(
+          `Ändringarna sparades, men bilden kunde inte laddas upp: ${err.message} Produkten behåller sin gamla bild.`,
+        );
+      }
+    }
     setEditingId(null);
 
-    // Om kollektionen ändrades kan produkten ha försvunnit ur den filtrerade listan
     const stillVisible = matchesCollection(updated, collectionFilter);
     setAnnouncement(
       stillVisible
@@ -191,7 +230,7 @@ export default function AdminProducts() {
       description: product.description,
       price: product.price,
       stock: product.stock,
-      image_url: product.image_url,
+      image_url: "",
       category: product.category,
       theme: product.theme,
       collection_id: product.collection_id,
@@ -210,7 +249,8 @@ export default function AdminProducts() {
     setDeletingId(product.id);
     setError(null);
     try {
-      await deleteProduct(token, product.id);
+      const result = await deleteProduct(token, product.id);
+      if (result?.searchIndexStale) setSearchStale(true);
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
       setAnnouncement(`${product.name} togs bort`);
       requestFocus("list");
@@ -230,6 +270,17 @@ export default function AdminProducts() {
       <p className="sr-only" role="status">
         {announcement}
       </p>
+
+      {searchStale && (
+        <div className="form-error search-stale-warning" role="alert">
+          Ändringen är sparad i butiken, men sökindexet är inte uppdaterat.
+          Sökningen kan visa gamla uppgifter tills du{" "}
+          <Link to="/admin/import">synkar sökindexet</Link>.{" "}
+          <button type="button" onClick={() => setSearchStale(false)}>
+            Dölj
+          </button>
+        </div>
+      )}
 
       <section>
         {justCreated ? (
@@ -379,7 +430,9 @@ export default function AdminProducts() {
                       focusOnMount
                       initialProduct={product}
                       mode="edit"
-                      onSubmit={(updates) => handleUpdate(product.id, updates)}
+                      onSubmit={(updates, file) =>
+                        handleUpdate(product.id, updates, file)
+                      }
                       onCancel={() => {
                         setEditingId(null);
                         requestFocus("edit-button", product.id);

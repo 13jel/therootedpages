@@ -4,6 +4,10 @@ import { CurrencyServiceError } from "../integrations/currencyAdapter.js";
 import { SupplierError } from "../integrations/supplierAdapter.js";
 import { SearchServiceError } from "../integrations/searchAdapter.js";
 import { PaymentError } from "../integrations/paymentAdapter.js";
+import {
+  StorageError,
+  MAX_IMAGE_BYTES,
+} from "../integrations/storageAdapter.js";
 
 export function errorHandler(
   err: unknown,
@@ -19,11 +23,22 @@ export function errorHandler(
       details: err.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
     });
   }
+  if (err instanceof Error && err.name === "MulterError") {
+    const code = (err as Error & { code?: string }).code;
+    return res.status(400).json({
+      error:
+        code === "LIMIT_FILE_SIZE"
+          ? `Bilden är för stor. Största tillåtna storlek är ${MAX_IMAGE_BYTES / 1024 / 1024} MB.`
+          : 'Ogiltig uppladdning. Skicka en enda bild i fältet "image".',
+    });
+  }
+
   if (
     err instanceof CurrencyServiceError ||
     err instanceof SupplierError ||
     err instanceof SearchServiceError ||
-    err instanceof PaymentError
+    err instanceof PaymentError ||
+    err instanceof StorageError
   ) {
     console.warn(`${err.name}: ${err.message}`);
     return res.status(err.status).json({ error: err.message });

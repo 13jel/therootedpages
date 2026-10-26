@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "../api/supabaseClient";
-import { uploadProductImage } from "../utils/image";
 import { fetchCollections } from "../api/collections";
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const emptyProduct = {
   name: "",
@@ -30,10 +30,10 @@ export default function ProductForm({
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(initialProduct?.image_url || null);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [collections, setCollections] = useState([]);
   const nameRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const isEditing = mode === "edit";
 
@@ -47,7 +47,6 @@ export default function ProductForm({
     if (focusOnMount) nameRef.current?.focus();
   }, [focusOnMount]);
 
-  // Följer kollektionsfiltret i admin utan att nollställa resten av formuläret
   useEffect(() => {
     if (isEditing || initialProduct) return;
     setForm((prev) => ({ ...prev, collection_id: defaultCollectionId }));
@@ -61,6 +60,17 @@ export default function ProductForm({
   function handleFileChange(e) {
     const selected = e.target.files?.[0];
     if (!selected) return;
+    if (selected.type !== "image/jpeg" && selected.type !== "image/png") {
+      setError("Bara JPEG- och PNG-bilder är tillåtna.");
+      e.target.value = "";
+      return;
+    }
+    if (selected.size > MAX_IMAGE_BYTES) {
+      setError("Bilden är för stor. Största tillåtna storlek är 5 MB.");
+      e.target.value = "";
+      return;
+    }
+    setError(null);
     setFile(selected);
     setPreview(URL.createObjectURL(selected));
   }
@@ -71,30 +81,25 @@ export default function ProductForm({
     setSaving(true);
     setError(null);
     try {
-      let image_url = form.image_url;
-      if (file) {
-        setUploading(true);
-        image_url = await uploadProductImage(supabase, file);
-        setUploading(false);
-      }
-
-      await onSubmit({
-        ...form,
-        image_url,
-        price: parseFloat(form.price),
-        stock: parseInt(form.stock, 10),
-        collection_id: form.collection_id || null,
-        color: form.color || null,
-      });
+      await onSubmit(
+        {
+          ...form,
+          price: parseFloat(form.price),
+          stock: parseInt(form.stock, 10),
+          collection_id: form.collection_id || null,
+          color: form.color || null,
+        },
+        file,
+      );
 
       if (!isEditing) {
         setForm({ ...emptyProduct, collection_id: defaultCollectionId });
         setFile(null);
         setPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       }
     } catch (err) {
       setError(err.message);
-      setUploading(false);
     } finally {
       setSaving(false);
     }
@@ -123,7 +128,7 @@ export default function ProductForm({
       </label>
 
       <label>
-        Pris (slantar)
+        Pris (kr)
         <input
           name="price"
           type="number"
@@ -148,8 +153,13 @@ export default function ProductForm({
       </label>
 
       <label>
-        Omslagsbild
-        <input type="file" accept="image/*" onChange={handleFileChange} />
+        Omslagsbild (JPEG eller PNG, max 5 MB)
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png"
+          onChange={handleFileChange}
+        />
       </label>
 
       {preview && (
@@ -235,13 +245,13 @@ export default function ProductForm({
 
       <div className="form-actions">
         <button type="submit" aria-disabled={saving}>
-          {uploading
-            ? "Laddar upp bild..."
-            : saving
-              ? "Sparar..."
-              : isEditing
-                ? "Spara ändringar"
-                : "Lägg till produkt"}
+          {saving
+            ? file
+              ? "Sparar och laddar upp bild..."
+              : "Sparar..."
+            : isEditing
+              ? "Spara ändringar"
+              : "Lägg till produkt"}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} aria-disabled={saving}>
