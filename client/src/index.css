@@ -1173,6 +1173,37 @@ select[aria-disabled="true"] {
   box-shadow: var(--shadow-hard-sm);
 }
 
+.product-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  padding: 0.75rem;
+  box-sizing: border-box;
+  text-align: center;
+  font-weight: 600;
+  color: var(--color-ink);
+  background: var(--color-paper-light);
+  border: 2.5px dashed var(--color-ink);
+  border-radius: 8px;
+}
+
+.product-image-placeholder--small {
+  width: 72px;
+  height: 72px;
+  aspect-ratio: auto;
+  padding: 4px;
+  font-size: 0.65rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.product-image-placeholder--large {
+  max-width: 28rem;
+  margin: 0 auto 1rem;
+}
+
 .admin-sort {
   margin-bottom: 1rem;
 }

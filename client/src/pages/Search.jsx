@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { searchProducts, fetchSearchCategories } from "../api/search";
 import { useCurrency } from "../context/CurrencyContext";
 import { usePageTitle } from "../hooks/usePageTitle";
+import ProductImage from "../components/ProductImage";
 
 const PAGE_SIZE = 12;
 
@@ -17,6 +18,7 @@ export default function Search() {
   const { formatPrice } = useCurrency();
   const [params, setParams] = useSearchParams();
 
+  // Allt sökläge ligger i adressen, så att länkar och bakåtknappen fungerar
   const urlQuery = params.get("q") || "";
   const page = Math.max(1, Number(params.get("page")) || 1);
   const category = params.get("category") || "";
@@ -31,6 +33,7 @@ export default function Search() {
   const [error, setError] = useState(null);
   const resultsRef = useRef(null);
 
+  // Ändrar en eller flera delar av sökläget. Allt som ändras utom sidnumret återgår till sida 1.
   function updateParams(changes, { replace = false } = {}) {
     const next = new URLSearchParams(params);
     for (const [key, value] of Object.entries(changes)) {
@@ -41,14 +44,18 @@ export default function Search() {
     setParams(next, { replace });
   }
 
+  // Kategorierna till filtret hämtas en gång
   useEffect(() => {
     const controller = new AbortController();
     fetchSearchCategories(controller.signal)
       .then(setCategories)
-      .catch(() => {});
+      .catch(() => {
+        // Filtret är en bonus. Misslyckas det går sökningen ändå att använda.
+      });
     return () => controller.abort();
   }, []);
 
+  // Vänta 350 ms efter sista tangenttryckningen innan sökningen uppdateras
   useEffect(() => {
     if (text === urlQuery) return;
     const t = setTimeout(
@@ -56,6 +63,7 @@ export default function Search() {
       350,
     );
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, urlQuery]);
 
   useEffect(() => {
@@ -85,6 +93,7 @@ export default function Search() {
 
   function goToPage(next) {
     updateParams({ page: next });
+    // flytta fokus till resultaten så tangentbords- och skärmläsaranvändare hamnar rätt
     setTimeout(() => resultsRef.current?.focus(), 0);
   }
 
@@ -193,7 +202,12 @@ export default function Search() {
           <ul className="search-list">
             {result.data.map((p) => (
               <li key={p.id} className="search-item">
-                {p.image_url && <img src={p.image_url} alt="" />}
+                <ProductImage
+                  src={p.image_url}
+                  alt=""
+                  size="small"
+                  loading="lazy"
+                />
                 <div>
                   <h2>
                     <Link to={`/products/${p.id}`}>{p.name}</Link>

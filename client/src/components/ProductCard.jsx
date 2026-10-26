@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useCurrency } from "../context/CurrencyContext";
 import { sortTypes, variantLabel } from "../utils/variants";
+import ProductImage from "./ProductImage";
 
 export default function ProductCard({ group }) {
   const { addItem } = useCart();
@@ -43,6 +44,7 @@ export default function ProductCard({ group }) {
   const buttonDisabled = outOfStock || status === "loading";
 
   async function handleAddToCart() {
+    // aria-disabled stoppar inte klick, så det görs här
     if (buttonDisabled) return;
     setStatus("loading");
     try {
@@ -56,9 +58,7 @@ export default function ProductCard({ group }) {
 
   return (
     <article className="product-card">
-      {product.image_url && (
-        <img src={product.image_url} alt="" loading="lazy" />
-      )}
+      <ProductImage src={product.image_url} alt="" loading="lazy" />
 
       <div className="product-card-body">
         <h3>

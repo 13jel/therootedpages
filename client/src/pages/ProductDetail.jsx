@@ -8,6 +8,7 @@ import { supabase } from "../api/supabaseClient";
 import { parseThemes } from "../utils/theme";
 import { findVariant, sortTypes, variantLabel } from "../utils/variants";
 import Lightbox from "../components/Lightbox";
+import ProductImage from "../components/ProductImage";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -98,7 +99,7 @@ export default function ProductDetail() {
         <span aria-hidden="true">←</span> Tillbaka till produkter
       </Link>
 
-      {mainImage && (
+      {mainImage ? (
         <button
           type="button"
           className="product-detail-main-image-wrap"
@@ -112,6 +113,8 @@ export default function ProductDetail() {
           />
           <span className="zoom-hint">Klicka för att förstora</span>
         </button>
+      ) : (
+        <ProductImage src={null} size="large" />
       )}
 
       {gallery.length > 1 && (
