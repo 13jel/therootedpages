@@ -3,7 +3,22 @@ import { z } from "zod";
 import { supabaseForUser, supabaseAdmin } from "../supabaseClient.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { AuthRequest } from "../types.js";
-import { createCheckoutSession } from "../integrations/paymentAdapter.js";
+import {
+  createCheckoutSession,
+  type CheckoutLine,
+} from "../integrations/paymentAdapter.js";
+import { priceItems } from "../integrations/cartPricing.js";
+import {
+  verifyServicePoint,
+  estimateDelivery,
+  normalizePostalCode,
+  formatPostalCode,
+} from "../integrations/postnordAdapter.js";
+import {
+  SHIPPING_METHODS,
+  SHIPPING_LABEL,
+  shippingCostOre,
+} from "../integrations/shipping.js";
 
 const orderRouter = Router();
 
@@ -20,6 +35,11 @@ const CheckoutBody = z.object({
     .min(1)
     .max(50),
   shipping_address: z.string().trim().min(1).max(500),
+  shipping: z.object({
+    method: z.enum(SHIPPING_METHODS),
+    postalCode: z.string().trim().min(1).max(20),
+    servicePointId: z.union([z.string().min(1).max(50), z.number()]).optional(),
+  }),
 });
 
 const MIN_TOTAL_ORE = 300;
@@ -29,63 +49,65 @@ orderRouter.post(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const body = CheckoutBody.parse(req.body);
+      const { method } = body.shipping;
 
-      const wanted = new Map<string, number>();
-      for (const i of body.items) {
-        const key = String(i.productId);
-        wanted.set(key, (wanted.get(key) ?? 0) + i.quantity);
+      const postalCode = normalizePostalCode(body.shipping.postalCode);
+      if (!postalCode) {
+        return res
+          .status(400)
+          .json({ error: "Ange ett svenskt postnummer med fem siffror." });
       }
 
-      const { data: products, error: prodError } = await supabaseAdmin
-        .from("products")
-        .select("id, name, price, stock, is_active")
-        .in("id", [...wanted.keys()]);
-      if (prodError) {
-        console.error("Kunde inte hämta produkter:", prodError);
-        return res.status(500).json({ error: "Kunde inte läsa varukorgen." });
-      }
-      const byId = new Map((products ?? []).map((p: any) => [String(p.id), p]));
-
-      const lines: {
-        productId: any;
-        name: string;
-        unitAmountOre: number;
-        quantity: number;
-      }[] = [];
-      for (const [key, quantity] of wanted) {
-        const p: any = byId.get(key);
-        if (!p || p.is_active === false) {
-          return res
-            .status(400)
-            .json({
-              error: "En av produkterna i varukorgen finns inte längre.",
-            });
-        }
-        if (p.stock < quantity) {
-          return res.status(409).json({
-            error:
-              p.stock <= 0
-                ? `"${p.name}" är slut i lager.`
-                : `Det finns bara ${p.stock} st kvar av "${p.name}".`,
-          });
-        }
-        lines.push({
-          productId: p.id,
-          name: p.name,
-          unitAmountOre: Math.round(Number(p.price) * 100),
-          quantity,
-        });
-      }
-
-      const totalOre = lines.reduce(
-        (s, l) => s + l.unitAmountOre * l.quantity,
-        0,
-      );
-      if (totalOre < MIN_TOTAL_ORE) {
+      const { lines, goodsOre } = await priceItems(body.items);
+      if (goodsOre < MIN_TOTAL_ORE) {
         return res
           .status(400)
           .json({ error: "Det minsta beloppet för en betalning är 3 kr." });
       }
+
+      const shippingOre = shippingCostOre(method, goodsOre);
+      let pickup: { id: string; name: string; address: string } | null = null;
+      if (method === "ombud") {
+        if (body.shipping.servicePointId === undefined) {
+          return res.status(400).json({ error: "Välj ett ombud." });
+        }
+        const sp = await verifyServicePoint(
+          postalCode,
+          String(body.shipping.servicePointId),
+        );
+        if (!sp) {
+          return res.status(400).json({
+            error: `Det valda ombudet finns inte för postnummer ${formatPostalCode(postalCode)}. Sök igen och välj ett ombud i listan.`,
+          });
+        }
+        pickup = {
+          id: sp.id,
+          name: sp.name,
+          address: [
+            sp.street,
+            [sp.postalCode, sp.city].filter(Boolean).join(" "),
+          ]
+            .filter(Boolean)
+            .join(", "),
+        };
+      }
+
+      let estimatedDelivery: string | null = null;
+      try {
+        estimatedDelivery = (
+          await estimateDelivery(
+            postalCode,
+            method === "ombud" ? "pickup" : "home",
+          )
+        ).date;
+      } catch (err) {
+        console.warn(
+          "Ingen leveranstid sparad på ordern:",
+          (err as Error).message,
+        );
+      }
+
+      const totalOre = goodsOre + shippingOre;
 
       const { data: order, error: orderError } = await supabaseAdmin
         .from("orders")
@@ -94,6 +116,13 @@ orderRouter.post(
           status: "Obetald",
           total: totalOre / 100,
           shipping_address: body.shipping_address,
+          shipping_method: method,
+          shipping_cost: shippingOre / 100,
+          shipping_postal_code: postalCode,
+          pickup_point_id: pickup?.id ?? null,
+          pickup_point_name: pickup?.name ?? null,
+          pickup_point_address: pickup?.address ?? null,
+          estimated_delivery: estimatedDelivery,
         })
         .select("id")
         .single();
@@ -122,10 +151,20 @@ orderRouter.post(
         return res.status(500).json({ error: "Kunde inte skapa ordern." });
       }
 
+      const stripeLines: CheckoutLine[] = [...lines];
+      if (shippingOre > 0) {
+        stripeLines.push({
+          name: pickup
+            ? `Frakt: ombud (${pickup.name})`
+            : `Frakt: ${SHIPPING_LABEL[method].toLowerCase()}`,
+          unitAmountOre: shippingOre,
+          quantity: 1,
+        });
+      }
       const session = await createCheckoutSession({
         orderId: String(order.id),
         email: req.user!.email ?? undefined,
-        lines,
+        lines: stripeLines,
       });
 
       const { error: sessError } = await supabaseAdmin
@@ -166,7 +205,7 @@ orderRouter.get("/:id", async (req: AuthRequest, res: Response) => {
   const { data, error } = await sb
     .from("orders")
     .select(
-      "id, status, total, created_at, paid_at, order_items(id, product_name, quantity, unit_price)",
+      "id, status, total, created_at, paid_at, shipping_method, shipping_cost, shipping_postal_code, pickup_point_name, pickup_point_address, estimated_delivery, order_items(id, product_name, quantity, unit_price)",
     )
     .eq("id", req.params.id)
     .eq("user_id", req.user!.id)

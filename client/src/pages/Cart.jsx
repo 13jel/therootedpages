@@ -6,6 +6,7 @@ import { useCurrency } from "../context/CurrencyContext";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { CURRENCY_LABELS, formatSek } from "../utils/currency";
 import { startCheckout } from "../api/orders";
+import { getShippingQuote } from "../api/shipping";
 import { fetchMyProfile } from "../api/account";
 
 export default function Cart() {
@@ -24,11 +25,17 @@ export default function Cart() {
   const [announcement, setAnnouncement] = useState("");
   const [focusRequest, setFocusRequest] = useState(null);
 
+  const [postalCode, setPostalCode] = useState("");
+  const [quote, setQuote] = useState(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState(null);
+  const [shippingMethod, setShippingMethod] = useState("");
+  const [servicePointId, setServicePointId] = useState("");
+
   const headingRef = useRef(null);
   const confirmHeadingRef = useRef(null);
   const payButtonRef = useRef(null);
 
-  // Flyttar fokus efter en ändring som annars skulle lämna fokus på ett element som försvunnit
   useEffect(() => {
     if (!focusRequest) return;
     const target = {
@@ -43,16 +50,13 @@ export default function Cart() {
     setFocusRequest({ name });
   }
 
-  // Förifyll leveransadress med kundens sparade standardadress, om den finns
   useEffect(() => {
     if (!userId) return;
     fetchMyProfile(userId)
       .then((profile) => {
         if (profile.address) setShippingAddress(profile.address);
       })
-      .catch(() => {
-        // ingen sparad adress, fältet får vara tomt
-      });
+      .catch(() => {});
   }, [userId]);
 
   async function handleRemove(item) {
@@ -94,12 +98,21 @@ export default function Cart() {
 
   function handleGoToConfirm(e) {
     e.preventDefault();
+    if (!shippingReady) {
+      setError(
+        !quoteIsCurrent
+          ? "Ange postnummer och hämta frakt innan du går vidare."
+          : shippingMethod === ""
+            ? "Välj hur du vill ha din leverans."
+            : "Välj ett ombud i listan.",
+      );
+      return;
+    }
+    setError(null);
     setConfirming(true);
     requestFocus("confirm");
   }
 
-  // Skickar bara produkt-id och antal. Servern räknar priset, sparar ordern som
-  // obetald och ger tillbaka adressen till Stripes betalsida.
   async function handleConfirmPurchase() {
     if (placing) return;
     setPlacing(true);
@@ -111,8 +124,14 @@ export default function Cart() {
           quantity: i.quantity,
         })),
         shipping_address: shippingAddress,
+        shipping: {
+          method: shippingMethod,
+          postalCode: quote.postalCode,
+          servicePointId:
+            shippingMethod === "ombud" ? servicePointId : undefined,
+        },
       });
-      window.location.assign(url); // placing förblir true tills sidan lämnas
+      window.location.assign(url);
     } catch (err) {
       setError(err.message);
       setConfirming(false);
@@ -121,8 +140,6 @@ export default function Cart() {
     }
   }
 
-  // Trycker kunden på "tillbaka" i webbläsaren från Stripe kan sidan återställas
-  // från cache med knappen låst, så vi låser upp den igen.
   useEffect(() => {
     function onPageShow(e) {
       if (e.persisted) setPlacing(false);
@@ -132,6 +149,47 @@ export default function Cart() {
   }, []);
 
   const total = items.reduce((sum, i) => sum + i.quantity * i.product.price, 0);
+
+  const cartKey = items.map((i) => `${i.product.id}x${i.quantity}`).join(",");
+  const quoteIsCurrent = quote !== null && quote.cartKey === cartKey;
+  const chosenOption = quoteIsCurrent
+    ? quote.options.find((o) => o.method === shippingMethod)
+    : undefined;
+  const chosenPoint =
+    quoteIsCurrent && shippingMethod === "ombud"
+      ? quote.servicePoints.find((p) => p.id === servicePointId)
+      : undefined;
+  const shippingReady =
+    chosenOption !== undefined &&
+    (shippingMethod !== "ombud" || chosenPoint !== undefined);
+  const grandTotal = chosenOption ? total + chosenOption.price : null;
+
+  async function handleFetchShipping() {
+    if (quoteLoading) return;
+    setQuoteError(null);
+    setQuoteLoading(true);
+    try {
+      const q = await getShippingQuote(token, {
+        items: items.map((i) => ({
+          productId: i.product.id,
+          quantity: i.quantity,
+        })),
+        postalCode,
+      });
+      setQuote({ ...q, cartKey });
+      setServicePointId((cur) =>
+        q.servicePoints.some((p) => p.id === cur) ? cur : "",
+      );
+      setAnnouncement(
+        `Frakt uppdaterad för postnummer ${q.postalCodeFormatted}. ${q.servicePoints.length} ombud hittades.`,
+      );
+    } catch (err) {
+      setQuote(null);
+      setQuoteError(err.message);
+    } finally {
+      setQuoteLoading(false);
+    }
+  }
 
   if (loading) return <p role="status">Laddar...</p>;
 
@@ -253,6 +311,133 @@ export default function Cart() {
                 />
               </label>
 
+              <fieldset className="shipping-section">
+                <legend>Frakt</legend>
+
+                <label htmlFor="postal-code">Postnummer</label>
+                <div className="postal-row">
+                  <input
+                    id="postal-code"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    maxLength={6}
+                    placeholder="123 45"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleFetchShipping();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleFetchShipping}
+                    aria-disabled={quoteLoading}
+                  >
+                    {quoteLoading ? "Hämtar..." : "Visa frakt"}
+                  </button>
+                </div>
+
+                {quoteError && (
+                  <p className="form-error" role="alert">
+                    {quoteError}
+                  </p>
+                )}
+                {quote && !quoteIsCurrent && (
+                  <p role="status">
+                    Varukorgen har ändrats. Tryck på "Visa frakt" för att
+                    uppdatera priserna.
+                  </p>
+                )}
+
+                {quoteIsCurrent && (
+                  <>
+                    <p className="shipping-hint">
+                      {quote.options[0].free
+                        ? `Du har fri frakt, ordervärdet når ${formatSek(quote.freeShippingThreshold)}.`
+                        : `Fri frakt när du handlar för ${formatSek(quote.freeShippingThreshold)} eller mer. Du saknar ${formatSek(quote.freeShippingThreshold - quote.goods)}.`}
+                    </p>
+
+                    <fieldset className="shipping-options">
+                      <legend>
+                        Leveranssätt för {quote.postalCodeFormatted}
+                      </legend>
+                      {quote.options.map((o) => (
+                        <label key={o.method} className="shipping-option">
+                          <input
+                            type="radio"
+                            name="shippingMethod"
+                            value={o.method}
+                            checked={shippingMethod === o.method}
+                            onChange={() => setShippingMethod(o.method)}
+                          />
+                          <span>
+                            {o.label},{" "}
+                            {o.free ? "0 kr (fri frakt)" : formatSek(o.price)}
+                            <br />
+                            <small>
+                              {o.estimatedDelivery
+                                ? `Beräknad leverans: ${o.estimatedDelivery.label}`
+                                : "Beräknad leverans kan inte visas just nu"}
+                            </small>
+                          </span>
+                        </label>
+                      ))}
+                    </fieldset>
+
+                    {shippingMethod === "ombud" && (
+                      <fieldset className="service-points">
+                        <legend>Välj ombud</legend>
+                        {quote.servicePointsError ? (
+                          <p role="alert">{quote.servicePointsError}</p>
+                        ) : (
+                          quote.servicePoints.map((p) => (
+                            <label key={p.id} className="service-point">
+                              <input
+                                type="radio"
+                                name="servicePoint"
+                                value={p.id}
+                                checked={servicePointId === p.id}
+                                onChange={() => setServicePointId(p.id)}
+                              />
+                              <span>
+                                {p.name}
+                                <br />
+                                <small>
+                                  {[
+                                    p.street,
+                                    [p.postalCode, p.city]
+                                      .filter(Boolean)
+                                      .join(" "),
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ")}
+                                  {p.distanceMeters !== null &&
+                                    ` (${p.distanceMeters < 1000 ? `${Math.round(p.distanceMeters)} m` : `${(p.distanceMeters / 1000).toFixed(1)} km`})`}
+                                </small>
+                              </span>
+                            </label>
+                          ))
+                        )}
+                      </fieldset>
+                    )}
+
+                    {grandTotal !== null && (
+                      <p className="shipping-total" aria-live="polite">
+                        Varor {formatSek(total)}, frakt{" "}
+                        {chosenOption.free
+                          ? "0 kr"
+                          : formatSek(chosenOption.price)}
+                        . <strong>Att betala: {formatSek(grandTotal)}</strong>
+                      </p>
+                    )}
+                  </>
+                )}
+              </fieldset>
+
               <button type="submit" ref={payButtonRef}>
                 Betala
               </button>
@@ -267,10 +452,22 @@ export default function Cart() {
               </h2>
               <p>
                 Du köper {items.length} {items.length === 1 ? "vara" : "varor"}{" "}
-                för <strong>{formatSek(total)}</strong>. Du skickas vidare till
-                Stripe för att betala.
+                för <strong>{formatSek(total)}</strong> plus frakt{" "}
+                {chosenOption?.free
+                  ? "0 kr"
+                  : formatSek(chosenOption?.price ?? 0)}
+                . Totalt <strong>{formatSek(grandTotal ?? total)}</strong>. Du
+                skickas vidare till Stripe för att betala.
               </p>
               <p>Levereras till: {shippingAddress}</p>
+              <p>
+                Frakt: {chosenOption?.label}
+                {chosenPoint &&
+                  `, ombud ${chosenPoint.name} (${chosenPoint.street}, ${chosenPoint.city})`}
+              </p>
+              {chosenOption?.estimatedDelivery && (
+                <p>Beräknad leverans: {chosenOption.estimatedDelivery.label}</p>
+              )}
 
               <div className="confirm-actions">
                 <button

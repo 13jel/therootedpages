@@ -5,9 +5,10 @@ import { useCart } from "../context/CartContext";
 import { formatSek } from "../utils/currency";
 import { fetchOrder } from "../api/orders";
 import { usePageTitle } from "../hooks/usePageTitle";
+import ShippingSummary from "../components/ShippingSummary";
 
 const POLL_MS = 2000;
-const MAX_POLLS = 15; // ca 30 s
+const MAX_POLLS = 15; 
 
 const PAID = ["Beställd", "Behandlas", "Levererad"];
 
@@ -114,8 +115,9 @@ export default function OrderConfirmation() {
               </li>
             ))}
           </ul>
+          <ShippingSummary order={order} />
           <p className="order-confirmation-total">
-            Totalt: <strong>{formatSek(order.total)}</strong>
+            Totalt inklusive frakt: <strong>{formatSek(order.total)}</strong>
           </p>
         </section>
       )}
@@ -148,8 +150,6 @@ function StatusMessage({ order, gaveUp }) {
     case "Återbetald":
       return <p role="status">Ordern är återbetald.</p>;
     default:
-      return (
-        <p role="status">Tack för din beställning! Betalningen är genomförd.</p>
-      );
+      return <p role="status">Tack för din beställning! Betalningen är genomförd.</p>;
   }
 }

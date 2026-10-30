@@ -5,6 +5,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import { fetchAllOrders, updateOrderStatus } from "../api/adminOrders";
 import { formatSek } from "../utils/currency";
 import AdminNav from "../components/AdminNav";
+import ShippingSummary from "../components/ShippingSummary";
 
 const ADMIN_STATUSES = ["Beställd", "Behandlas", "Levererad", "Återbetald"];
 const SERVER_ONLY_STATUSES = ["Obetald", "Avbruten"];
@@ -95,6 +96,8 @@ export default function AdminOrders() {
                   </li>
                 ))}
               </ul>
+
+              <ShippingSummary order={order} />
 
               {serverOnly ? (
                 <p>

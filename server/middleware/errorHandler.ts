@@ -8,6 +8,8 @@ import {
   StorageError,
   MAX_IMAGE_BYTES,
 } from "../integrations/storageAdapter.js";
+import { PostnordError } from "../integrations/postnordAdapter.js";
+import { CartError } from "../integrations/cartPricing.js";
 
 export function errorHandler(
   err: unknown,
@@ -38,7 +40,9 @@ export function errorHandler(
     err instanceof SupplierError ||
     err instanceof SearchServiceError ||
     err instanceof PaymentError ||
-    err instanceof StorageError
+    err instanceof StorageError ||
+    err instanceof PostnordError ||
+    err instanceof CartError
   ) {
     console.warn(`${err.name}: ${err.message}`);
     return res.status(err.status).json({ error: err.message });

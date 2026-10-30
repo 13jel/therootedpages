@@ -18,7 +18,7 @@ async function request(token, path, options = {}) {
   return body;
 }
 
-export function startCheckout(token, { items, shipping_address }) {
+export function startCheckout(token, { items, shipping_address, shipping }) {
   return request(token, "/api/orders/checkout", {
     method: "POST",
     body: JSON.stringify({
@@ -27,6 +27,13 @@ export function startCheckout(token, { items, shipping_address }) {
         quantity: i.quantity,
       })),
       shipping_address,
+      shipping: {
+        method: shipping.method,
+        postalCode: shipping.postalCode,
+        ...(shipping.servicePointId
+          ? { servicePointId: shipping.servicePointId }
+          : {}),
+      },
     }),
   });
 }
